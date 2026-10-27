@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block title %}Kalendarz urodzin - UrodzinkiApp{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-1">Kalendarz Urodzin</h1>
+    <p class="text-muted mb-0">Przeglądaj solenizantów w układzie miesięcznym oraz rocznym.</p>
+  </div>
+  <ul class="nav nav-pills" id="calendarTab" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="month-tab" data-bs-toggle="pill" data-bs-target="#month-view" type="button" role="tab">
+        <i class="bi bi-calendar3 me-1"></i> Układ miesięczny
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="year-tab" data-bs-toggle="pill" data-bs-target="#year-view" type="button" role="tab">
+        <i class="bi bi-grid-3x3-gap me-1"></i> Przegląd roczny
+      </button>
+    </li>
+  </ul>
+</div>
+
+<div class="tab-content" id="calendarTabContent">
+  <!-- WIDOK MIESIĘCZNY (Siatka dni) -->
+  <div class="tab-pane fade show active" id="month-view" role="tabpanel">
+    <div class="card border-0 shadow-sm mb-4">
+      <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <a href="?month={{ prev_month }}&year={{ prev_year }}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-chevron-left me-1"></i> Poprzedni
+        </a>
+        <h2 class="h5 fw-bold mb-0 text-primary">
+          <i class="bi bi-calendar-month me-1"></i> {{ selected_month_name }} {{ selected_year }}
+        </h2>
+        <a href="?month={{ next_month }}&year={{ next_year }}" class="btn btn-outline-secondary btn-sm">
+          Następny <i class="bi bi-chevron-right ms-1"></i>
+        </a>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-bordered mb-0 calendar-table">
+            <thead>
+              <tr>
+                <th style="width: 14.28%;">Pon</th>
+                <th style="width: 14.28%;">Wt</th>
+                <th style="width: 14.28%;">Śr</th>
+                <th style="width: 14.28%;">Czw</th>
+                <th style="width: 14.28%;">Pt</th>
+                <th style="width: 14.28%;" class="text-danger">Sob</th>
+                <th style="width: 14.28%;" class="text-danger">Niedz</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for week in month_days %}
+              <tr>
+                {% for day, weekday in week %}
+                  {% if day == 0 %}
+                    <td class="calendar-cell other-month"></td>
+                  {% else %}
+                    <td class="calendar-cell {% if day == today.day and selected_month == today.month and selected_year == today.year %}is-today{% endif %}">
+                      <div class="d-flex justify-content-between align-items-center mb-1">
+                        <span class="calendar-day-number">{{ day }}</span>
+                        {% if day == today.day and selected_month == today.month and selected_year == today.year %}
+                          <span class="badge bg-primary" style="font-size: 0.65rem;">Dziś</span>
+                        {% endif %}
+                      </div>
+
+                      {% for friend_day, bday_friends in days_map.items %}
+                        {% if friend_day == day %}
+                          {% for f in bday_friends %}
+                            <a href="{% url 'birthdays:friend_update' f.pk %}" class="calendar-event-tag bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" title="{{ f.first_name }} {{ f.last_name }} ({{ f.birth_date|date:'Y' }})">
+                              🎁 {{ f.first_name }} {{ f.last_name|slice:":1" }}.
+                            </a>
+                          {% endfor %}
+                        {% endif %}
+                      {% endfor %}
+                    </td>
+                  {% endif %}
+                {% endfor %}
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- WIDOK ROCZNY (12 miesięcy w kafelkach) -->
+  <div class="tab-pane fade" id="year-view" role="tabpanel">
+    <div class="row g-3">
+      {% for m in months_data %}
+      <div class="col-md-6 col-lg-4 col-xl-3">
+        <div class="card h-100 border-0 shadow-sm {% if m.is_current %}border-top border-4 border-primary{% endif %}">
+          <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center border-0">
+            <span class="fw-bold {% if m.is_current %}text-primary{% else %}text-dark{% endif %}">
+              {{ m.month_name }}
+            </span>
+            <span class="badge bg-light text-muted border">{{ m.count }}</span>
+          </div>
+          <div class="card-body py-2">
+            {% if m.friends %}
+              <ul class="list-unstyled mb-0 small">
+                {% for f in m.friends %}
+                <li class="py-1 border-bottom border-light d-flex justify-content-between align-items-center">
+                  <span>
+                    <strong class="text-secondary">{{ f.birth_date.day }}</strong>. {{ f.first_name }} {{ f.last_name }}
+                  </span>
+                  {% if f.is_today %}
+                    <span class="badge bg-danger">Dziś!</span>
+                  {% endif %}
+                </li>
+                {% endfor %}
+              </ul>
+            {% else %}
+              <p class="text-muted small mb-0 py-2 italic text-center">Brak urodzin</p>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}

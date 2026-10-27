@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}Pulpit - Nadchodzące Urodziny{% endblock %}
+
+{% block content %}
+<div class="row align-items-center mb-4">
+  <div class="col-md-8">
+    <h1 class="h3 fw-bold text-dark mb-1">Cześć! Sprawdź nadchodzące urodziny 🎉</h1>
+    <p class="text-muted mb-0">Zarządzaj datami urodzin swoich bliskich i nigdy nie zapomnij o życzeniach.</p>
+  </div>
+  <div class="col-md-4 text-md-end mt-3 mt-md-0">
+    <a href="{% url 'birthdays:friend_create' %}" class="btn btn-primary shadow-sm">
+      <i class="bi bi-person-plus-fill me-1"></i> Dodaj nowego znajomego
+    </a>
+  </div>
+</div>
+
+<!-- Sekcja: Dzisiejsze urodziny -->
+{% if today_birthdays %}
+<div class="card border-0 shadow-sm mb-4 border-start border-4 border-danger bg-white">
+  <div class="card-body p-4">
+    <div class="d-flex align-items-center gap-2 mb-3">
+      <span class="fs-4">🎂</span>
+      <h2 class="h5 fw-bold text-danger mb-0">Ktoś ma dzisiaj urodziny!</h2>
+    </div>
+    <div class="row g-3">
+      {% for friend in today_birthdays %}
+      <div class="col-md-6 col-lg-4">
+        <div class="p-3 rounded-3 bg-danger bg-opacity-10 border border-danger border-opacity-25">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h3 class="h6 fw-bold mb-1">{{ friend.first_name }} {{ friend.last_name }}</h3>
+              <p class="small text-muted mb-2">Kończy dzisiaj <strong>{{ friend.upcoming_age }} lat!</strong></p>
+              {% if friend.notes %}
+              <p class="small text-secondary mb-0"><i class="bi bi-chat-left-text me-1"></i>{{ friend.notes|truncatechars:60 }}</p>
+              {% endif %}
+            </div>
+            <span class="badge badge-birthday-today px-3 py-2">DZIŚ!</span>
+          </div>
+          <div class="mt-3 pt-2 border-top border-danger border-opacity-25 d-flex gap-2">
+            {% if friend.phone_number %}
+            <a href="tel:{{ friend.phone_number }}" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-telephone-fill"></i> Zadzwoń
+            </a>
+            {% endif %}
+            {% if friend.email %}
+            <a href="mailto:{{ friend.email }}" class="btn btn-sm btn-outline-danger">
+              <i class="bi bi-envelope-fill"></i> Napisz maila
+            </a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Kafelki podsumowujące (Statystyki) -->
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-lg-4">
+    <div class="card border-0 shadow-sm card-hover">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="bg-primary bg-opacity-10 p-3 rounded-circle text-primary fs-3">
+          <i class="bi bi-people"></i>
+        </div>
+        <div>
+          <div class="text-muted small">Wszyscy znajomi</div>
+          <div class="fs-4 fw-bold">{{ total_count }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card border-0 shadow-sm card-hover">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="bg-warning bg-opacity-10 p-3 rounded-circle text-warning fs-3">
+          <i class="bi bi-alarm-fill"></i>
+        </div>
+        <div>
+          <div class="text-muted small">W najbliższe 7 dni</div>
+          <div class="fs-4 fw-bold">{{ upcoming_7_days|length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-sm-6 col-lg-4">
+    <div class="card border-0 shadow-sm card-hover">
+      <div class="card-body d-flex align-items-center gap-3">
+        <div class="bg-success bg-opacity-10 p-3 rounded-circle text-success fs-3">
+          <i class="bi bi-calendar-check"></i>
+        </div>
+        <div>
+          <div class="text-muted small">W tym miesiącu (30 dni)</div>
+          <div class="fs-4 fw-bold">{{ upcoming_30_days|length }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Kolumna: Najbliższe urodziny (7 dni) -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h2 class="h6 fw-bold mb-0 text-dark">
+          <i class="bi bi-hourglass-split text-warning me-1"></i> Najbliższe urodziny (kolejne 7 dni)
+        </h2>
+        <span class="badge bg-warning text-dark">{{ upcoming_7_days|length }}</span>
+      </div>
+      <div class="card-body pt-0">
+        {% if upcoming_7_days %}
+          <div class="list-group list-group-flush">
+            {% for friend in upcoming_7_days %}
+            <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center">
+              <div>
+                <a href="{% url 'birthdays:friend_update' friend.pk %}" class="fw-bold text-decoration-none text-dark">
+                  {{ friend.first_name }} {{ friend.last_name }}
+                </a>
+                <div class="small text-muted">
+                  {{ friend.birth_date|date:"d.m" }} &bull; Skończy {{ friend.upcoming_age }} lat
+                </div>
+              </div>
+              <span class="badge badge-birthday-soon px-3 py-2">
+                za {{ friend.days_until_birthday }} {% if friend.days_until_birthday == 1 %}dzień{% else %}dni{% endif %}
+              </span>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-emoji-smile fs-1 d-block mb-2 text-secondary"></i>
+            Brak urodzin w ciągu najbliższego tygodnia.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Kolumna: Kolejne w kolejce (30 dni) -->
+  <div class="col-lg-6">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+        <h2 class="h6 fw-bold mb-0 text-dark">
+          <i class="bi bi-calendar-event text-primary me-1"></i> W ciągu 30 dni
+        </h2>
+        <a href="{% url 'birthdays:friend_list' %}" class="small text-decoration-none">Zobacz wszystkich &rarr;</a>
+      </div>
+      <div class="card-body pt-0">
+        {% if upcoming_30_days %}
+          <div class="list-group list-group-flush">
+            {% for friend in upcoming_30_days %}
+            <div class="list-group-item px-0 py-3 d-flex justify-content-between align-items-center">
+              <div>
+                <a href="{% url 'birthdays:friend_update' friend.pk %}" class="fw-bold text-decoration-none text-dark">
+                  {{ friend.first_name }} {{ friend.last_name }}
+                </a>
+                <div class="small text-muted">
+                  {{ friend.birth_date|date:"d.m" }} &bull; Skończy {{ friend.upcoming_age }} lat
+                </div>
+              </div>
+              <span class="badge bg-light text-dark border px-3 py-2">
+                za {{ friend.days_until_birthday }} dni
+              </span>
+            </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-4 text-muted">
+            <i class="bi bi-calendar-x fs-1 d-block mb-2 text-secondary"></i>
+            Brak nadchodzących urodzin w najbliższym miesiącu.
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

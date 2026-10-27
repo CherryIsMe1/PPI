@@ -1,0 +1,129 @@
+{% extends 'base.html' %}
+
+{% block title %}Lista znajomych - UrodzinkiApp{% endblock %}
+
+{% block content %}
+<div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+  <div>
+    <h1 class="h3 fw-bold text-dark mb-1">Twoi Znajomi</h1>
+    <p class="text-muted mb-0">Łącznie zapisanych osób: <strong>{{ total_count }}</strong></p>
+  </div>
+  <div>
+    <a href="{% url 'birthdays:friend_create' %}" class="btn btn-primary shadow-sm">
+      <i class="bi bi-person-plus-fill me-1"></i> Dodaj nowego znajomego
+    </a>
+  </div>
+</div>
+
+<!-- Filtry i wyszukiwarka -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body p-3">
+    <form method="get" class="row g-2 align-items-center">
+      <div class="col-md-7">
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0 text-muted">
+            <i class="bi bi-search"></i>
+          </span>
+          <input type="text" name="q" value="{{ query }}" class="form-control border-start-0" placeholder="Szukaj po imieniu, nazwisku, mailu lub notatkach...">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select name="sort" class="form-select" onchange="this.form.submit()">
+          <option value="next_bday" {% if sort_by == 'next_bday' %}selected{% endif %}>Sortuj: Najbliższe urodziny</option>
+          <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Sortuj: Alfabetycznie (A-Z)</option>
+          <option value="age" {% if sort_by == 'age' %}selected{% endif %}>Sortuj: Wiek (od najstarszych)</option>
+        </select>
+      </div>
+      <div class="col-md-2 d-grid">
+        <button type="submit" class="btn btn-outline-primary">Filtruj</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Lista znajomych w tabeli -->
+{% if friends %}
+<div class="card border-0 shadow-sm overflow-hidden">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th scope="col" class="ps-4">Imię i nazwisko</th>
+          <th scope="col">Data urodzin</th>
+          <th scope="col">Wiek</th>
+          <th scope="col">Status urodzin</th>
+          <th scope="col">Kontakt / Notatka</th>
+          <th scope="col" class="text-end pe-4">Akcje</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for friend in friends %}
+        <tr>
+          <td class="ps-4">
+            <div class="fw-bold text-dark">{{ friend.first_name }} {{ friend.last_name }}</div>
+          </td>
+          <td>
+            <div class="text-muted"><i class="bi bi-calendar-event me-1"></i>{{ friend.birth_date|date:"d F Y" }}</div>
+          </td>
+          <td>
+            <span class="badge bg-light text-dark border">
+              {{ friend.current_age }} lat (wkrótce {{ friend.upcoming_age }})
+            </span>
+          </td>
+          <td>
+            {% if friend.is_today %}
+              <span class="badge badge-birthday-today px-3 py-2">🎉 DZIŚ URODZINY!</span>
+            {% elif friend.is_soon %}
+              <span class="badge badge-birthday-soon px-3 py-2">za {{ friend.days_until_birthday }} dni</span>
+            {% else %}
+              <span class="text-muted small">za {{ friend.days_until_birthday }} dni</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if friend.phone_number %}
+              <div class="small"><i class="bi bi-telephone text-muted me-1"></i>{{ friend.phone_number }}</div>
+            {% endif %}
+            {% if friend.email %}
+              <div class="small"><i class="bi bi-envelope text-muted me-1"></i>{{ friend.email }}</div>
+            {% endif %}
+            {% if friend.notes %}
+              <div class="small text-secondary text-truncate" style="max-width: 200px;" title="{{ friend.notes }}">
+                <i class="bi bi-sticky text-muted me-1"></i>{{ friend.notes }}
+              </div>
+            {% endif %}
+          </td>
+          <td class="text-end pe-4">
+            <div class="btn-group btn-group-sm">
+              <a href="{% url 'birthdays:friend_update' friend.pk %}" class="btn btn-outline-secondary" title="Edytuj">
+                <i class="bi bi-pencil"></i>
+              </a>
+              <a href="{% url 'birthdays:friend_delete' friend.pk %}" class="btn btn-outline-danger" title="Usuń">
+                <i class="bi bi-trash"></i>
+              </a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% else %}
+<div class="card border-0 shadow-sm text-center py-5">
+  <div class="card-body">
+    <i class="bi bi-person-x fs-1 text-muted d-block mb-3"></i>
+    <h3 class="h5 fw-bold text-dark">Nie znaleziono żadnych znajomych</h3>
+    <p class="text-muted">
+      {% if query %}
+        Brak wyników dla zapytania "{{ query }}". Spróbuj wyszukać inną frazę.
+      {% else %}
+        Twoja lista jest jeszcze pusta. Dodaj pierwszego znajomego już teraz!
+      {% endif %}
+    </p>
+    <a href="{% url 'birthdays:friend_create' %}" class="btn btn-primary mt-2">
+      <i class="bi bi-person-plus-fill me-1"></i> Dodaj pierwszego znajomego
+    </a>
+  </div>
+</div>
+{% endif %}
+{% endblock %}
