@@ -96,3 +96,8 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+# Authentication & Redirects (Etap 3)
+LOGIN_URL = 'birthdays:login'
+LOGIN_REDIRECT_URL = 'birthdays:dashboard'
+LOGOUT_REDIRECT_URL = 'birthdays:login'

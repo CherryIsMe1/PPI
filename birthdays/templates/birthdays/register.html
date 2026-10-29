@@ -1,0 +1,107 @@
+{% extends 'base.html' %}
+
+{% block title %}Rejestracja - UrodzinkiApp{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center py-4">
+  <div class="col-md-8 col-lg-6 col-xl-5">
+    <div class="card border-0 shadow-lg">
+      <div class="card-header bg-transparent text-center py-4 border-0">
+        <i class="bi bi-person-plus-fill omi-purple-text fs-1 d-block mb-2"></i>
+        <h1 class="h3 fw-bold mb-1">Rejestracja Konta</h1>
+        <p class="text-muted small mb-0">Utwórz profil, by gromadzić kontakty i kalendarz</p>
+      </div>
+      <div class="card-body p-4 pt-0">
+        <form method="post" novalidate>
+          {% csrf_token %}
+
+          {% if form.non_field_errors %}
+          <div class="alert alert-danger py-2 small">
+            {% for error in form.non_field_errors %}
+              <div>{{ error }}</div>
+            {% endfor %}
+          </div>
+          {% endif %}
+
+          <div class="mb-3">
+            <label for="{{ form.username.id_for_label }}" class="form-label fw-semibold">
+              {{ form.username.label }} <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+              {{ form.username }}
+            </div>
+            {% if form.username.errors %}
+              <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+            {% endif %}
+            <div class="form-text small text-muted">{{ form.username.help_text }}</div>
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label for="{{ form.first_name.id_for_label }}" class="form-label fw-semibold">
+                {{ form.first_name.label }}
+              </label>
+              {{ form.first_name }}
+            </div>
+            <div class="col-md-6">
+              <label for="{{ form.last_name.id_for_label }}" class="form-label fw-semibold">
+                {{ form.last_name.label }}
+              </label>
+              {{ form.last_name }}
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="{{ form.email.id_for_label }}" class="form-label fw-semibold">
+              {{ form.email.label }} <span class="text-danger">*</span>
+            </label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+              {{ form.email }}
+            </div>
+            {% if form.email.errors %}
+              <div class="text-danger small mt-1">{{ form.email.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-3">
+            <label for="id_password1" class="form-label fw-semibold">Hasło <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-key"></i></span>
+              <input type="password" name="password1" autocomplete="new-password" required id="id_password1" class="form-control" placeholder="Wpisz bezpieczne hasło">
+            </div>
+            {% if form.password1.errors %}
+              <div class="text-danger small mt-1">{{ form.password1.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4">
+            <label for="id_password2" class="form-label fw-semibold">Powtórz hasło <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-check2-circle"></i></span>
+              <input type="password" name="password2" autocomplete="new-password" required id="id_password2" class="form-control" placeholder="Powtórz wpisane hasło">
+            </div>
+            {% if form.password2.errors %}
+              <div class="text-danger small mt-1">{{ form.password2.errors.0 }}</div>
+            {% endif %}
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 py-2 fw-bold mb-3">
+            <i class="bi bi-check-circle-fill me-1"></i> Utwórz konto
+          </button>
+        </form>
+
+        <div class="text-center pt-3 border-top border-secondary border-opacity-25">
+          <p class="small text-muted mb-0">
+            Masz już konto? 
+            <a href="{% url 'birthdays:login' %}" class="omi-cyan-text fw-bold text-decoration-none ms-1">
+              Zaloguj się
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
