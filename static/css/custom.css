@@ -1,82 +1,522 @@
-body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color: #2d3748;
+/* ==========================================================================
+   THEME: OMI - CYBERPUNK EDGERUNNERS II
+   Palette: Nomad Dark Green + Cyberoptics (Electric Cyan outer & Violet inner)
+   ========================================================================== */
+
+:root {
+  /* Backgrounds */
+  --cyber-bg: #070b10;
+  --cyber-bg-surface: #0c131c;
+  --cyber-card: #101924;
+  --cyber-card-hover: #152232;
+  --cyber-card-inner: #0b1118;
+
+  /* Nomad Green (Omi's signature hair & jacket) */
+  --omi-green-dark: #0f261c;
+  --omi-green: #1a4a32;
+  --omi-green-accent: #2e7d56;
+  --omi-green-glow: #22c55e;
+
+  /* Cyberoptics - Outer Iris (Electric Cyan) */
+  --omi-cyan: #00f0ff;
+  --omi-cyan-dim: #0284c7;
+  --omi-cyan-glow: rgba(0, 240, 255, 0.45);
+  --omi-cyan-soft: rgba(0, 240, 255, 0.12);
+
+  /* Cyberoptics - Inner Core (Violet / Purple) */
+  --omi-purple: #a855f7;
+  --omi-purple-deep: #7e22ce;
+  --omi-purple-glow: rgba(168, 85, 247, 0.45);
+  --omi-purple-soft: rgba(168, 85, 247, 0.15);
+
+  /* Accents & Status */
+  --omi-red-cyber: #ff2a6d;
+  --omi-yellow-cyber: #ffe600;
+  --omi-border: #1a2a3b;
+  --omi-border-highlight: #28445f;
+
+  /* Typography */
+  --cyber-text: #e2e8f0;
+  --cyber-text-muted: #849cb5;
+  --cyber-text-dim: #50657b;
 }
 
-.card {
+/* Base Body & Layout */
+body.cyber-body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--cyber-bg);
+  background-image: 
+    radial-gradient(ellipse 60% 40% at 50% -10%, rgba(0, 240, 255, 0.12), transparent),
+    radial-gradient(ellipse 40% 30% at 85% 80%, rgba(168, 85, 247, 0.08), transparent),
+    linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 36px 36px, 36px 36px;
+  background-attachment: fixed;
+  color: var(--cyber-text);
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6, .cyber-brand-text {
+  font-family: 'Chakra Petch', sans-serif;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--cyber-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--omi-green);
+  border-radius: 4px;
+  border: 1px solid var(--omi-border);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--omi-cyan);
+}
+
+/* ==========================================================================
+   NAVBAR (Omi Cyberpunk HUD)
+   ========================================================================== */
+.cyber-navbar {
+  background: rgba(12, 19, 28, 0.88) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 2px solid var(--omi-green-accent);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7), 0 2px 10px rgba(0, 240, 255, 0.15);
+}
+
+.omi-brand-icon {
+  color: var(--omi-cyan);
+  filter: drop-shadow(0 0 8px var(--omi-cyan-glow));
+}
+
+.cyber-brand-text {
+  font-size: 1.35rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.omi-cyan-text {
+  color: var(--omi-cyan) !important;
+  text-shadow: 0 0 10px var(--omi-cyan-glow);
+}
+
+.omi-purple-text {
+  color: var(--omi-purple) !important;
+  text-shadow: 0 0 10px var(--omi-purple-glow);
+}
+
+.cyber-navbar .nav-link {
+  color: var(--cyber-text-muted) !important;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  padding: 0.5rem 1rem !important;
+  position: relative;
+}
+
+.cyber-navbar .nav-link:hover {
+  color: var(--omi-cyan) !important;
+  text-shadow: 0 0 8px var(--omi-cyan-glow);
+}
+
+.cyber-navbar .nav-link.active {
+  color: #ffffff !important;
+  background: rgba(0, 240, 255, 0.1);
+  border-bottom: 2px solid var(--omi-cyan);
+  border-radius: 4px 4px 0 0;
+  text-shadow: 0 0 8px var(--omi-cyan-glow);
+}
+
+/* Button: Cyber Add (Nomad Green + Cyan Glow) */
+.btn-cyber-add {
+  background: linear-gradient(135deg, var(--omi-green-accent), var(--omi-green));
+  color: #ffffff !important;
+  border: 1px solid var(--omi-cyan);
+  border-radius: 6px;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+  font-family: 'Chakra Petch', sans-serif;
+  letter-spacing: 0.5px;
+  transition: all 0.25s ease;
+}
+
+.btn-cyber-add:hover {
+  background: linear-gradient(135deg, var(--omi-cyan), #0284c7);
+  color: #050a10 !important;
+  border-color: #ffffff;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.65);
+  transform: translateY(-2px);
+}
+
+/* ==========================================================================
+   CARDS & SURFACES
+   ========================================================================== */
+.card,
+.cyber-body .card {
+  background-color: var(--cyber-card) !important;
+  border: 1px solid var(--omi-border) !important;
   border-radius: 12px;
-  transition: transform 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  color: var(--cyber-text);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.card:hover,
 .card-hover:hover {
   transform: translateY(-3px);
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1) !important;
+  border-color: var(--omi-cyan) !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.6), 0 0 15px rgba(0, 240, 255, 0.2) !important;
+}
+
+.card-header,
+.cyber-body .card-header {
+  background-color: var(--cyber-card-inner) !important;
+  border-bottom: 1px solid var(--omi-border) !important;
+  color: #ffffff !important;
+}
+
+.cyber-body .bg-white {
+  background-color: var(--cyber-card) !important;
+}
+
+.cyber-body .text-dark {
+  color: #ffffff !important;
+}
+
+.cyber-body .text-muted {
+  color: var(--cyber-text-muted) !important;
+}
+
+.cyber-body .text-secondary {
+  color: var(--cyber-text-dim) !important;
+}
+
+/* Stat Cards (Icons & Glows) */
+.bg-primary.bg-opacity-10 {
+  background-color: rgba(0, 240, 255, 0.12) !important;
+  color: var(--omi-cyan) !important;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+}
+
+.bg-warning.bg-opacity-10 {
+  background-color: rgba(168, 85, 247, 0.15) !important;
+  color: var(--omi-purple) !important;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.bg-success.bg-opacity-10 {
+  background-color: rgba(34, 197, 94, 0.15) !important;
+  color: var(--omi-green-glow) !important;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+/* Birthday Today Alert Card */
+.cyber-body .border-danger {
+  border-color: var(--omi-red-cyber) !important;
+}
+
+.cyber-body .bg-danger.bg-opacity-10 {
+  background-color: rgba(255, 42, 109, 0.15) !important;
+  border: 1px solid rgba(255, 42, 109, 0.4) !important;
+}
+
+.cyber-body .text-danger {
+  color: var(--omi-red-cyber) !important;
+  text-shadow: 0 0 8px rgba(255, 42, 109, 0.4);
+}
+
+/* Badges - Cyber Age & Pill Badges */
+.badge-cyber-pill,
+.cyber-body .badge.bg-light {
+  background-color: #0b131c !important;
+  color: #38bdf8 !important; /* Wyrazisty błękit/cyjan */
+  border: 1px solid #1e3a52 !important;
+  font-family: 'Chakra Petch', sans-serif;
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 5px 12px;
+  border-radius: 20px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+.badge-cyber-pill:hover,
+.cyber-body .badge.bg-light:hover {
+  border-color: var(--omi-cyan) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.4) !important;
 }
 
 .badge-birthday-today {
-  background: linear-gradient(135deg, #ff416c, #ff4b2b);
-  color: white;
-  animation: pulse-badge 2s infinite;
+  background: linear-gradient(135deg, var(--omi-red-cyber), #ff0055);
+  color: #ffffff;
+  font-family: 'Chakra Petch', sans-serif;
+  letter-spacing: 1px;
+  box-shadow: 0 0 10px rgba(255, 42, 109, 0.6);
+  animation: pulse-cyber 1.8s infinite;
 }
 
 .badge-birthday-soon {
-  background: linear-gradient(135deg, #f7971e, #ffd200);
-  color: #1a202c;
-  font-weight: 600;
+  background: linear-gradient(135deg, var(--omi-purple), var(--omi-purple-deep));
+  color: #ffffff;
+  font-family: 'Chakra Petch', sans-serif;
+  box-shadow: 0 0 8px rgba(168, 85, 247, 0.4);
 }
 
-@keyframes pulse-badge {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); }
+@keyframes pulse-cyber {
+  0% { transform: scale(1); box-shadow: 0 0 6px rgba(255, 42, 109, 0.5); }
+  50% { transform: scale(1.06); box-shadow: 0 0 18px rgba(255, 42, 109, 0.85); }
+  100% { transform: scale(1); box-shadow: 0 0 6px rgba(255, 42, 109, 0.5); }
 }
 
-/* Kalendarz */
+/* ==========================================================================
+   BUTTONS & CONTROLS
+   ========================================================================== */
+.btn-primary {
+  background: linear-gradient(135deg, var(--omi-cyan), #0284c7) !important;
+  color: #050a10 !important;
+  font-weight: 700 !important;
+  border: none !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.35) !important;
+  font-family: 'Chakra Petch', sans-serif;
+  transition: all 0.2s ease !important;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #38bdf8, var(--omi-cyan)) !important;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.65) !important;
+  transform: translateY(-2px);
+}
+
+.btn-outline-secondary {
+  border-color: var(--omi-border-highlight) !important;
+  color: var(--cyber-text-muted) !important;
+}
+
+.btn-outline-secondary:hover {
+  background: rgba(0, 240, 255, 0.1) !important;
+  color: var(--omi-cyan) !important;
+  border-color: var(--omi-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.btn-outline-primary {
+  border-color: var(--omi-cyan) !important;
+  color: var(--omi-cyan) !important;
+}
+
+.btn-outline-primary:hover {
+  background: var(--omi-cyan) !important;
+  color: #050a10 !important;
+  box-shadow: 0 0 12px var(--omi-cyan-glow);
+}
+
+.btn-outline-danger {
+  border-color: var(--omi-red-cyber) !important;
+  color: var(--omi-red-cyber) !important;
+}
+
+.btn-outline-danger:hover {
+  background: var(--omi-red-cyber) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(255, 42, 109, 0.5);
+}
+
+/* ==========================================================================
+   FORMS & INPUTS
+   ========================================================================== */
+.form-control,
+.form-select {
+  background-color: var(--cyber-card-inner) !important;
+  border: 1px solid var(--omi-border) !important;
+  color: #ffffff !important;
+  border-radius: 8px;
+}
+
+.form-control:focus,
+.form-select:focus {
+  background-color: #0d1520 !important;
+  border-color: var(--omi-cyan) !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3) !important;
+  color: #ffffff !important;
+}
+
+.form-control::placeholder {
+  color: var(--cyber-text-dim) !important;
+}
+
+.input-group-text {
+  background-color: var(--cyber-card-inner) !important;
+  border-color: var(--omi-border) !important;
+  color: var(--omi-cyan) !important;
+}
+
+/* ==========================================================================
+   TABLES & LISTS
+   ========================================================================== */
+.table {
+  color: var(--cyber-text) !important;
+  border-color: var(--omi-border) !important;
+}
+
+.table th {
+  background-color: var(--cyber-card-inner) !important;
+  color: var(--omi-cyan) !important;
+  border-color: var(--omi-border) !important;
+  font-family: 'Chakra Petch', sans-serif;
+  letter-spacing: 0.5px;
+}
+
+.table td {
+  background-color: transparent !important;
+  border-color: var(--omi-border) !important;
+  vertical-align: middle;
+}
+
+/* Dane kontaktowe (telefon, email, notatki) w tabeli */
+.table td .small {
+  color: #cbd5e1 !important; /* Jasny, czytelny kolor tekstu */
+  font-size: 0.85rem;
+}
+
+.table td .small i {
+  color: var(--omi-cyan) !important; /* Neonowy cyjan dla ikonek telefonu, maila i notatek */
+}
+
+.table-hover tbody tr:hover td {
+  background-color: rgba(0, 240, 255, 0.05) !important;
+}
+
+/* List group */
+.list-group-item {
+  background-color: var(--cyber-card) !important;
+  border-color: var(--omi-border) !important;
+  color: var(--cyber-text) !important;
+}
+
+.list-group-item:hover {
+  background-color: var(--cyber-card-hover) !important;
+}
+
+/* ==========================================================================
+   CALENDAR (Omi Cyber Grid)
+   ========================================================================== */
 .calendar-table th {
-  background-color: #f8fafc;
+  background-color: var(--cyber-card-inner) !important;
+  color: var(--omi-cyan) !important;
   text-align: center;
-  font-weight: 600;
-  padding: 10px;
+  font-weight: 700;
+  padding: 12px 6px;
+  border-color: var(--omi-border) !important;
 }
 
 .calendar-cell {
   height: 110px;
   vertical-align: top;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--omi-border) !important;
   padding: 6px;
   position: relative;
-  transition: background-color 0.2s;
+  background-color: var(--cyber-card) !important;
+  transition: all 0.2s ease;
 }
 
 .calendar-cell:hover {
-  background-color: #f1f5f9;
+  background-color: var(--cyber-card-hover) !important;
+  border-color: var(--omi-cyan) !important;
+  box-shadow: inset 0 0 12px rgba(0, 240, 255, 0.1);
 }
 
 .calendar-cell.other-month {
-  background-color: #f8fafc;
-  opacity: 0.4;
+  background-color: #0a0f16 !important;
+  opacity: 0.35;
 }
 
 .calendar-cell.is-today {
-  background-color: #eff6ff;
-  border: 2px solid #3b82f6 !important;
+  background-color: rgba(0, 240, 255, 0.08) !important;
+  border: 2px solid var(--omi-cyan) !important;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
 }
 
 .calendar-day-number {
   font-size: 0.85rem;
-  font-weight: 600;
-  color: #64748b;
+  font-weight: 700;
+  color: var(--cyber-text-muted);
+  font-family: 'Chakra Petch', sans-serif;
   margin-bottom: 4px;
+}
+
+.calendar-cell.is-today .calendar-day-number {
+  color: var(--omi-cyan) !important;
+  text-shadow: 0 0 6px var(--omi-cyan-glow);
 }
 
 .calendar-event-tag {
   font-size: 0.75rem;
-  padding: 2px 6px;
-  border-radius: 6px;
+  padding: 3px 8px;
+  border-radius: 4px;
   display: block;
-  margin-bottom: 2px;
+  margin-bottom: 3px;
   text-decoration: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  background: rgba(168, 85, 247, 0.2);
+  color: #ffffff !important;
+  border-left: 3px solid var(--omi-purple);
+  transition: all 0.15s ease;
+}
+
+.calendar-event-tag:hover {
+  background: var(--omi-purple);
+  box-shadow: 0 0 8px var(--omi-purple-glow);
+  transform: translateX(2px);
+}
+
+/* Nav Pills (Kalendarz tabs) */
+.nav-pills .nav-link {
+  color: var(--cyber-text-muted) !important;
+  border: 1px solid var(--omi-border);
+  font-family: 'Chakra Petch', sans-serif;
+  margin: 0 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.nav-pills .nav-link:hover {
+  color: var(--omi-cyan) !important;
+  border-color: var(--omi-cyan);
+}
+
+.nav-pills .nav-link.active {
+  background: linear-gradient(135deg, var(--omi-green-accent), var(--omi-green)) !important;
+  color: #ffffff !important;
+  border-color: var(--omi-cyan) !important;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.3);
+}
+
+/* ==========================================================================
+   FOOTER (Cyber HUD footer)
+   ========================================================================== */
+.cyber-footer {
+  background: rgba(12, 19, 28, 0.95);
+  border-top: 1px solid var(--omi-border);
+}
+
+.text-cyber-muted {
+  color: var(--cyber-text-muted);
+}
+
+.text-cyber-dim {
+  color: var(--cyber-text-dim);
+}
+
+.text-cyber-glow {
+  color: #ffffff;
+  font-family: 'Chakra Petch', sans-serif;
+  letter-spacing: 0.5px;
 }
