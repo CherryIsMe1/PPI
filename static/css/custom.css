@@ -134,6 +134,19 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
 }
 
 /* Button: Cyber Add (Nomad Green + Cyan Glow) */
+.cyber-navbar .btn {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  height: 38px !important;
+  font-family: 'Chakra Petch', sans-serif !important;
+  font-size: 0.85rem !important;
+  letter-spacing: 0.5px !important;
+  border-radius: 6px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
+
 .btn-cyber-add {
   background: linear-gradient(135deg, var(--omi-green-accent), var(--omi-green));
   color: #ffffff !important;
@@ -197,6 +210,18 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
 }
 
 /* Stat Cards (Icons & Glows) */
+.stat-icon-circle {
+  width: 56px;
+  height: 56px;
+  min-width: 56px;
+  min-height: 56px;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+}
+
 .bg-primary.bg-opacity-10 {
   background-color: rgba(0, 240, 255, 0.12) !important;
   color: var(--omi-cyan) !important;
