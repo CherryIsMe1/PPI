@@ -66,11 +66,23 @@
                         {% endif %}
                       </div>
 
+                      <!-- Urodziny w tym dniu -->
                       {% for friend_day, bday_friends in days_map.items %}
                         {% if friend_day == day %}
                           {% for f in bday_friends %}
-                            <a href="{% url 'birthdays:friend_update' f.pk %}" class="calendar-event-tag bg-primary bg-opacity-10 text-primary border border-primary border-opacity-25" title="{{ f.first_name }} {{ f.last_name }} ({{ f.birth_date|date:'Y' }})">
-                              🎁 {{ f.first_name }} {{ f.last_name|slice:":1" }}.
+                            <a href="{% url 'birthdays:friend_update' f.pk %}" class="calendar-event-tag" title="Urodziny: {{ f.first_name }} {{ f.last_name }}">
+                              🎂 {{ f.first_name }} {{ f.last_name|slice:":1" }}.
+                            </a>
+                          {% endfor %}
+                        {% endif %}
+                      {% endfor %}
+
+                      <!-- Wydarzenia / Imprezy w tym dniu -->
+                      {% for ev_day, day_events in events_map.items %}
+                        {% if ev_day == day %}
+                          {% for ev in day_events %}
+                            <a href="{% url 'birthdays:event_detail' ev.pk %}" class="calendar-event-tag calendar-party-tag" title="{{ ev.title }} ({{ ev.get_event_type_display }})">
+                              ⚡ {{ ev.title|truncatechars:16 }}
                             </a>
                           {% endfor %}
                         {% endif %}

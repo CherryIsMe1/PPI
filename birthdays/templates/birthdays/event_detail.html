@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ event.title }} - UrodzinkiApp{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-9 col-xl-8">
+    <!-- Górny pasek nawigacyjny -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <a href="{% url 'birthdays:event_list' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left me-1"></i> Wróć do listy wydarzeń
+      </a>
+      <div class="btn-group btn-group-sm">
+        <a href="{% url 'birthdays:event_update' event.pk %}" class="btn btn-outline-primary px-3">
+          <i class="bi bi-pencil me-1"></i> Edytuj
+        </a>
+        <a href="{% url 'birthdays:event_delete' event.pk %}" class="btn btn-outline-danger px-3">
+          <i class="bi bi-trash me-1"></i> Usuń
+        </a>
+      </div>
+    </div>
+
+    <!-- Główna karta wydarzenia -->
+    <div class="card border-0 shadow-lg mb-4">
+      <div class="card-header py-4 border-0" style="background: linear-gradient(135deg, rgba(26, 74, 50, 0.4), rgba(12, 19, 28, 0.8));">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+          <span class="badge badge-cyber-pill px-3 py-2">
+            {{ event.get_event_type_display }}
+          </span>
+
+          {% if event.is_today %}
+            <span class="badge badge-birthday-today px-3 py-2 fs-6">🎉 TO DZISIAJ!</span>
+          {% elif event.is_soon %}
+            <span class="badge badge-birthday-soon px-3 py-2 fs-6">⏳ Za {{ event.days_until }} dni</span>
+          {% elif event.is_upcoming %}
+            <span class="badge bg-transparent border border-secondary text-muted px-3 py-2">
+              Za {{ event.days_until }} dni
+            </span>
+          {% else %}
+            <span class="badge bg-transparent text-secondary px-3 py-2">Wydarzenie zakończone</span>
+          {% endif %}
+        </div>
+
+        <h1 class="h2 fw-bold text-white mb-2">{{ event.title }}</h1>
+        <p class="text-muted small mb-0">Organizator: <strong class="omi-cyan-text">{{ event.user.username }}</strong> &bull; Utworzono: {{ event.created_at|date:"d.m.Y H:i" }}</p>
+      </div>
+
+      <div class="card-body p-4">
+        <!-- Pasek kluczowych parametrów (Termin, Miejsce, Budżet) -->
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <div class="p-3 rounded-3 h-100" style="background: rgba(0, 240, 255, 0.05); border: 1px solid rgba(0, 240, 255, 0.15);">
+              <div class="small text-muted mb-1"><i class="bi bi-calendar3 omi-cyan-text me-1"></i> Termin:</div>
+              <div class="fw-bold text-white fs-6">{{ event.date|date:"l, d F Y" }}</div>
+              {% if event.time %}
+                <div class="small text-muted mt-1"><i class="bi bi-clock me-1"></i> Godz. {{ event.time|time:"H:i" }}</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 rounded-3 h-100" style="background: rgba(168, 85, 247, 0.05); border: 1px solid rgba(168, 85, 247, 0.15);">
+              <div class="small text-muted mb-1"><i class="bi bi-geo-alt-fill omi-purple-text me-1"></i> Miejsce:</div>
+              {% if event.location %}
+                <div class="fw-bold text-white fs-6">{{ event.location }}</div>
+              {% else %}
+                <div class="text-muted fst-italic">Do ustalenia</div>
+              {% endif %}
+            </div>
+          </div>
+
+          <div class="col-md-4">
+            <div class="p-3 rounded-3 h-100" style="background: rgba(34, 197, 94, 0.05); border: 1px solid rgba(34, 197, 94, 0.15);">
+              <div class="small text-muted mb-1"><i class="bi bi-cash-stack omi-green-glow me-1"></i> Budżet / Składka:</div>
+              {% if event.budget %}
+                <div class="fw-bold text-white fs-6">{{ event.budget }} zł</div>
+              {% else %}
+                <div class="text-muted fst-italic">Brak określonego budżetu</div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Solenizant (jeśli powiązany) -->
+        {% if event.friend %}
+        <div class="card border-0 mb-4" style="background: rgba(168, 85, 247, 0.08); border-left: 4px solid var(--omi-purple) !important;">
+          <div class="card-body p-3 d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+              <div class="fs-2">🎂</div>
+              <div>
+                <div class="small text-muted">Wydarzenie dedykowane dla solenizanta:</div>
+                <div class="fw-bold text-white fs-5">{{ event.friend.first_name }} {{ event.friend.last_name }}</div>
+                <div class="small text-muted">Urodziny: {{ event.friend.birth_date|date:"d F" }} (za {{ event.friend.days_until_birthday }} dni)</div>
+              </div>
+            </div>
+            <a href="{% url 'birthdays:friend_update' event.friend.pk %}" class="btn btn-outline-secondary btn-sm">
+              <i class="bi bi-person me-1"></i> Zobacz znajomego
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Opis i szczegóły wydarzenia -->
+        <div class="mb-4">
+          <h2 class="h5 fw-bold text-white mb-3">
+            <i class="bi bi-card-text omi-cyan-text me-2"></i>Opis i plan imprezy
+          </h2>
+          {% if event.description %}
+            <div class="p-4 rounded-3 text-light" style="background: var(--cyber-card-inner); border: 1px solid var(--omi-border); white-space: pre-line; line-height: 1.7;">
+              {{ event.description }}
+            </div>
+          {% else %}
+            <p class="text-muted fst-italic">Brak opisu dla tego wydarzenia. Kliknij „Edytuj”, aby dodać wskazówki, plan lub co należy ze sobą zabrać.</p>
+          {% endif %}
+        </div>
+
+        <!-- Zapowiedź kolejnego etapu (10.12 - Uczestnicy i Głosowanie) -->
+        <div class="p-3 rounded-3" style="background: rgba(0, 240, 255, 0.04); border: 1px dashed rgba(0, 240, 255, 0.3);">
+          <div class="d-flex align-items-center gap-2 mb-1">
+            <i class="bi bi-people-fill omi-cyan-text"></i>
+            <strong class="text-white small">Uczestnicy, Komentarze i Głosowanie:</strong>
+            <span class="badge bg-primary bg-opacity-25 text-info ms-auto small">Etap 5 &bull; 10.12.2026</span>
+          </div>
+          <p class="text-muted small mb-0">
+            W kolejnym etapie w tym miejscu pojawi się lista potwierdzonych gości, możliwość dodawania komentarzy oraz ankieta głosowania nad prezentem.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

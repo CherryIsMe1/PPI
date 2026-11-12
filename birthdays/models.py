@@ -68,3 +68,77 @@ class Friend(models.Model):
     @property
     def upcoming_age(self):
         return self.next_birthday.year - self.birth_date.year
+
+
+class Event(models.Model):
+    EVENT_TYPE_CHOICES = [
+        ('birthday', '🎂 Impreza urodzinowa'),
+        ('surprise', '🎉 Przyjęcie niespodzianka'),
+        ('gift', '🎁 Zrzutka na prezent'),
+        ('outing', '🍕 Wypad / Wyjście do lokalu'),
+        ('other', '✨ Inne wydarzenie okolicznościowe'),
+    ]
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='events',
+        verbose_name="Organizator"
+    )
+    title = models.CharField(max_length=200, verbose_name="Tytuł wydarzenia")
+    friend = models.ForeignKey(
+        Friend,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='events',
+        verbose_name="Solenizant (opcjonalnie)"
+    )
+    event_type = models.CharField(
+        max_length=30,
+        choices=EVENT_TYPE_CHOICES,
+        default='birthday',
+        verbose_name="Rodzaj wydarzenia"
+    )
+    date = models.DateField(verbose_name="Data wydarzenia")
+    time = models.TimeField(null=True, blank=True, verbose_name="Godzina rozpoczęcia")
+    location = models.CharField(max_length=200, blank=True, verbose_name="Lokalizacja / Miejsce")
+    description = models.TextField(blank=True, verbose_name="Opis i szczegóły imprezy")
+    budget = models.DecimalField(
+        max_digits=10,
+        decimal_places=2,
+        null=True,
+        blank=True,
+        verbose_name="Składka / Budżet (zł)"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data utworzenia")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Data modyfikacji")
+
+    class Meta:
+        verbose_name = "Wydarzenie"
+        verbose_name_plural = "Wydarzenia"
+        ordering = ['date', 'time']
+
+    def __str__(self):
+        return f"{self.title} ({self.date.strftime('%d.%m.%Y')})"
+
+    @property
+    def days_until(self):
+        return (self.date - date.today()).days
+
+    @property
+    def is_today(self):
+        return self.days_until == 0
+
+    @property
+    def is_past(self):
+        return self.days_until < 0
+
+    @property
+    def is_upcoming(self):
+        return self.days_until >= 0
+
+    @property
+    def is_soon(self):
+        return 0 <= self.days_until <= 7
+

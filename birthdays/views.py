@@ -6,8 +6,8 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Q
-from .models import Friend
-from .forms import FriendForm, RegisterForm, UserProfileUpdateForm
+from .models import Friend, Event
+from .forms import FriendForm, RegisterForm, UserProfileUpdateForm, EventForm
 
 
 # ==============================================================================
@@ -93,7 +93,7 @@ def profile_view(request):
 
 @login_required
 def dashboard(request):
-    """Główny pulpit z podsumowaniem i powiadomieniami o nadchodzących urodzinach"""
+    """Główny pulpit z podsumowaniem i powiadomieniami o nadchodzących urodzinach i wydarzeniach"""
     # Przypisz ewentualne stare kontakty bez właściciela do pierwszego zalogowanego użytkownika
     Friend.objects.filter(user__isnull=True).update(user=request.user)
 
@@ -105,12 +105,22 @@ def dashboard(request):
     upcoming_7_days = [f for f in all_friends if 0 < f.days_until_birthday <= 7]
     upcoming_30_days = [f for f in all_friends if 7 < f.days_until_birthday <= 30]
 
+    # Nadchodzące wydarzenia i imprezy
+    upcoming_events = list(Event.objects.filter(
+        user=request.user,
+        date__gte=date.today()
+    ).order_by('date', 'time')[:4])
+
+    events_count = Event.objects.filter(user=request.user).count()
+
     context = {
         'total_count': len(all_friends),
         'today_birthdays': today_birthdays,
         'upcoming_7_days': upcoming_7_days,
         'upcoming_30_days': upcoming_30_days,
         'recent_friends': all_friends[:6],
+        'upcoming_events': upcoming_events,
+        'events_count': events_count,
     }
     return render(request, 'birthdays/dashboard.html', context)
 
@@ -234,7 +244,7 @@ def calendar_view(request):
     cal = calendar.Calendar(firstweekday=0) # Poniedziałek
     month_days = cal.monthdays2calendar(selected_year, selected_month)
 
-    # Mapa dni: {dzień: [znajomi]}
+    # Mapa dni dla urodzin: {dzień: [znajomi]}
     days_map = {}
     for f in all_friends:
         if f.birth_date.month == selected_month:
@@ -242,6 +252,19 @@ def calendar_view(request):
             if d not in days_map:
                 days_map[d] = []
             days_map[d].append(f)
+
+    # Mapa dni dla wydarzeń w wybranym miesiącu: {dzień: [wydarzenia]}
+    month_events = Event.objects.filter(
+        user=request.user,
+        date__year=selected_year,
+        date__month=selected_month
+    ).order_by('time')
+    events_map = {}
+    for ev in month_events:
+        d = ev.date.day
+        if d not in events_map:
+            events_map[d] = []
+        events_map[d].append(ev)
 
     # Poprzedni/następny miesiąc
     prev_month = 12 if selected_month == 1 else selected_month - 1
@@ -257,9 +280,131 @@ def calendar_view(request):
         'selected_year': selected_year,
         'month_days': month_days,
         'days_map': days_map,
+        'events_map': events_map,
         'prev_month': prev_month,
         'prev_year': prev_year,
         'next_month': next_month,
         'next_year': next_year,
     }
     return render(request, 'birthdays/calendar.html', context)
+
+
+# ==============================================================================
+# WYDARZENIA (Etap 4: Tworzenie, edycja, usuwanie i wyświetlanie wydarzeń)
+# ==============================================================================
+
+@login_required
+def event_list(request):
+    """Lista wszystkich zaplanowanych wydarzeń z wyszukiwarką i filtrami"""
+    query = request.GET.get('q', '').strip()
+    event_type = request.GET.get('type', '')
+    status_filter = request.GET.get('status', 'upcoming')  # domyślnie nadchodzące
+
+    events = Event.objects.filter(user=request.user)
+
+    if query:
+        events = events.filter(
+            Q(title__icontains=query) |
+            Q(location__icontains=query) |
+            Q(description__icontains=query) |
+            Q(friend__first_name__icontains=query) |
+            Q(friend__last_name__icontains=query)
+        )
+
+    if event_type:
+        events = events.filter(event_type=event_type)
+
+    today = date.today()
+    if status_filter == 'upcoming':
+        events = events.filter(date__gte=today).order_by('date', 'time')
+    elif status_filter == 'past':
+        events = events.filter(date__lt=today).order_by('-date', '-time')
+    else:  # 'all'
+        events = events.order_by('date', 'time')
+
+    events_list = list(events)
+
+    all_user_events = Event.objects.filter(user=request.user)
+    upcoming_count = all_user_events.filter(date__gte=today).count()
+    past_count = all_user_events.filter(date__lt=today).count()
+
+    context = {
+        'events': events_list,
+        'query': query,
+        'event_type': event_type,
+        'status_filter': status_filter,
+        'event_types': Event.EVENT_TYPE_CHOICES,
+        'total_count': len(events_list),
+        'upcoming_count': upcoming_count,
+        'past_count': past_count,
+        'today': today,
+    }
+    return render(request, 'birthdays/event_list.html', context)
+
+
+@login_required
+def event_detail(request, pk):
+    """Szczegółowy widok pojedynczego wydarzenia"""
+    event = get_object_or_404(Event, pk=pk, user=request.user)
+    return render(request, 'birthdays/event_detail.html', {'event': event})
+
+
+@login_required
+def event_create(request):
+    """Tworzenie nowego wydarzenia okolicznościowego"""
+    initial = {}
+    friend_id = request.GET.get('friend')
+    if friend_id:
+        initial['friend'] = friend_id
+
+    if request.method == 'POST':
+        form = EventForm(request.POST, user=request.user)
+        if form.is_valid():
+            event = form.save(commit=False)
+            event.user = request.user
+            event.save()
+            messages.success(request, f'Pomyślnie utworzono wydarzenie: {event.title}!')
+            return redirect('birthdays:event_detail', pk=event.pk)
+    else:
+        form = EventForm(user=request.user, initial=initial)
+
+    return render(request, 'birthdays/event_form.html', {
+        'form': form,
+        'title': 'Zaplanuj nowe wydarzenie',
+        'btn_text': 'Zapisz wydarzenie'
+    })
+
+
+@login_required
+def event_update(request, pk):
+    """Edycja danych wydarzenia (dostęp tylko dla organizatora)"""
+    event = get_object_or_404(Event, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = EventForm(request.POST, instance=event, user=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f'Zaktualizowano wydarzenie: {event.title}!')
+            return redirect('birthdays:event_detail', pk=event.pk)
+    else:
+        form = EventForm(instance=event, user=request.user)
+
+    return render(request, 'birthdays/event_form.html', {
+        'form': form,
+        'event': event,
+        'title': f'Edycja: {event.title}',
+        'btn_text': 'Zapisz zmiany'
+    })
+
+
+@login_required
+def event_delete(request, pk):
+    """Usuwanie wydarzenia z bazy"""
+    event = get_object_or_404(Event, pk=pk, user=request.user)
+    if request.method == 'POST':
+        title = event.title
+        event.delete()
+        messages.info(request, f'Usunięto wydarzenie: {title}.')
+        return redirect('birthdays:event_list')
+
+    return render(request, 'birthdays/event_confirm_delete.html', {'event': event})
+

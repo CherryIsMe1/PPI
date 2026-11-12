@@ -16,4 +16,11 @@ urlpatterns = [
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('profile/', views.profile_view, name='profile'),
+
+    # Etap 4: Wydarzenia (CRUD)
+    path('events/', views.event_list, name='event_list'),
+    path('events/add/', views.event_create, name='event_create'),
+    path('events/<int:pk>/', views.event_detail, name='event_detail'),
+    path('events/<int:pk>/edit/', views.event_update, name='event_update'),
+    path('events/<int:pk>/delete/', views.event_delete, name='event_delete'),
 ]

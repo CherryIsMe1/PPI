@@ -514,6 +514,24 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
   transform: translateX(2px);
 }
 
+.calendar-party-tag {
+  background: rgba(0, 240, 255, 0.18) !important;
+  color: #ffffff !important;
+  border-left: 3px solid var(--omi-cyan) !important;
+}
+
+.calendar-party-tag:hover {
+  background: var(--omi-cyan) !important;
+  color: #050a10 !important;
+  box-shadow: 0 0 10px var(--omi-cyan-glow) !important;
+  transform: translateX(2px);
+}
+
+.hover-cyan:hover {
+  color: var(--omi-cyan) !important;
+  text-shadow: 0 0 8px var(--omi-cyan-glow);
+}
+
 /* Nav Pills (Kalendarz tabs) */
 .nav-pills .nav-link {
   color: var(--cyber-text-muted) !important;

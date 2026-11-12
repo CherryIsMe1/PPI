@@ -1,7 +1,63 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import Friend
+from .models import Friend, Event
+
+
+class EventForm(forms.ModelForm):
+    class Meta:
+        model = Event
+        fields = ['title', 'friend', 'event_type', 'date', 'time', 'location', 'description', 'budget']
+        widgets = {
+            'title': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'np. 21. urodziny Adama – domówka'
+            }),
+            'friend': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'event_type': forms.Select(attrs={
+                'class': 'form-select'
+            }),
+            'date': forms.DateInput(attrs={
+                'class': 'form-control',
+                'type': 'date'
+            }),
+            'time': forms.TimeInput(attrs={
+                'class': 'form-control',
+                'type': 'time'
+            }),
+            'location': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'np. Klub Cyber / Działka / Mieszkanie'
+            }),
+            'description': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'np. Plan imprezy, pomysły na niespodziankę, co zabrać...'
+            }),
+            'budget': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'np. 50.00',
+                'step': '0.01'
+            }),
+        }
+        labels = {
+            'title': 'Tytuł wydarzenia',
+            'friend': 'Solenizant (opcjonalnie)',
+            'event_type': 'Rodzaj wydarzenia',
+            'date': 'Data wydarzenia',
+            'time': 'Godzina rozpoczęcia',
+            'location': 'Lokalizacja / Adres',
+            'description': 'Opis i szczegóły imprezy',
+            'budget': 'Przewidywany budżet / Składka (zł)',
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user:
+            self.fields['friend'].queryset = Friend.objects.filter(user=user)
+        self.fields['friend'].empty_label = "-- Brak solenizanta (wydarzenie ogólne) --"
 
 
 class FriendForm(forms.ModelForm):
