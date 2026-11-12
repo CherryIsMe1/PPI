@@ -4,6 +4,7 @@ from django.contrib.auth.forms import UserCreationForm
 from .models import Friend, Event, EventComment, EventPoll, PollOption
 
 
+# Formularz tworzenia i edycji wydarzenia (pola z widgetami Bootstrap)
 class EventForm(forms.ModelForm):
     class Meta:
         model = Event
@@ -59,11 +60,13 @@ class EventForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
+        # Ograniczamy listę solenizantów do znajomych zalogowanego użytkownika
         if user:
             self.fields['friend'].queryset = Friend.objects.filter(user=user)
         self.fields['friend'].empty_label = "-- Brak solenizanta (wydarzenie ogólne) --"
 
 
+# Formularz dodawania komentarza pod wydarzeniem
 class CommentForm(forms.ModelForm):
     class Meta:
         model = EventComment
@@ -80,6 +83,7 @@ class CommentForm(forms.ModelForm):
         }
 
 
+# Formularz tworzenia ankiety – pytanie + opcje wpisane jako tekst (każda linia = opcja)
 class PollCreateForm(forms.ModelForm):
     options_text = forms.CharField(
         widget=forms.Textarea(attrs={
@@ -105,6 +109,7 @@ class PollCreateForm(forms.ModelForm):
         }
 
     def clean_options_text(self):
+        """Walidacja: parsujemy tekst na listę opcji i wymagamy minimum 2"""
         text = self.cleaned_data.get('options_text', '').strip()
         lines = [line.strip() for line in text.split('\n') if line.strip()]
         if len(lines) < 2:
@@ -112,7 +117,7 @@ class PollCreateForm(forms.ModelForm):
         return lines
 
 
-
+# Formularz dodawania i edycji kontaktu (jubilata)
 class FriendForm(forms.ModelForm):
     class Meta:
         model = Friend
@@ -154,6 +159,7 @@ class FriendForm(forms.ModelForm):
         }
 
 
+# Formularz rejestracji nowego konta (rozszerzenie wbudowanego UserCreationForm Django)
 class RegisterForm(UserCreationForm):
     first_name = forms.CharField(
         max_length=50,
@@ -185,6 +191,7 @@ class RegisterForm(UserCreationForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Ustawiamy klasę Bootstrap dla wszystkich pól formularza
         self.fields['username'].widget.attrs.update({
             'class': 'form-control',
             'placeholder': 'np. netrunner99'
@@ -197,6 +204,7 @@ class RegisterForm(UserCreationForm):
             field.widget.attrs['class'] = 'form-control'
 
 
+# Formularz edycji danych profilu (imię, nazwisko, email – bez zmiany hasła)
 class UserProfileUpdateForm(forms.ModelForm):
     class Meta:
         model = User
@@ -211,3 +219,4 @@ class UserProfileUpdateForm(forms.ModelForm):
             'last_name': 'Nazwisko',
             'email': 'Adres e-mail',
         }
+

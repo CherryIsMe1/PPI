@@ -1,41 +1,41 @@
 /* ==========================================================================
-   THEME: OMI - CYBERPUNK EDGERUNNERS II
-   Palette: Nomad Dark Green + Cyberoptics (Electric Cyan outer & Violet inner)
+   GŁÓWNY ARKUSZ STYLÓW (CSS) - UrodzinkiApp
+   Paleta: Ciemny motyw Cyber (odcienie granatu, błękit cyjan i fiolet)
    ========================================================================== */
 
 :root {
-  /* Backgrounds */
+  /* Kolory tła aplikacji */
   --cyber-bg: #070b10;
   --cyber-bg-surface: #0c131c;
   --cyber-card: #101924;
   --cyber-card-hover: #152232;
   --cyber-card-inner: #0b1118;
 
-  /* Nomad Green (Omi's signature hair & jacket) */
+  /* Akcenty zielone (sukces, potwierdzenia, statusy) */
   --omi-green-dark: #0f261c;
   --omi-green: #1a4a32;
   --omi-green-accent: #2e7d56;
   --omi-green-glow: #22c55e;
 
-  /* Cyberoptics - Outer Iris (Electric Cyan) */
+  /* Akcenty cyjanowe / błękitne (główne linki, aktywne elementy, obramowania) */
   --omi-cyan: #00f0ff;
   --omi-cyan-dim: #0284c7;
   --omi-cyan-glow: rgba(0, 240, 255, 0.45);
   --omi-cyan-soft: rgba(0, 240, 255, 0.12);
 
-  /* Cyberoptics - Inner Core (Violet / Purple) */
+  /* Akcenty fioletowe (solenizanci, ankiety, wyróżnienia) */
   --omi-purple: #a855f7;
   --omi-purple-deep: #7e22ce;
   --omi-purple-glow: rgba(168, 85, 247, 0.45);
   --omi-purple-soft: rgba(168, 85, 247, 0.15);
 
-  /* Accents & Status */
+  /* Statusy ostrzeżeń, błędów i obramowania */
   --omi-red-cyber: #ff2a6d;
   --omi-yellow-cyber: #ffe600;
   --omi-border: #1a2a3b;
   --omi-border-highlight: #28445f;
 
-  /* Typography */
+  /* Kolory typografii i tekstów */
   --cyber-text: #e2e8f0;
   --cyber-text-muted: #849cb5;
   --cyber-text-dim: #50657b;
@@ -80,7 +80,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
 }
 
 /* ==========================================================================
-   NAVBAR (Omi Cyberpunk HUD)
+   PASEK NAWIGACJI (NAVBAR)
    ========================================================================== */
 .cyber-navbar {
   background: rgba(12, 19, 28, 0.88) !important;
@@ -133,7 +133,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
   text-shadow: 0 0 8px var(--omi-cyan-glow);
 }
 
-/* Button: Cyber Add (Nomad Green + Cyan Glow) */
+/* Przycisk dodawania w pasku nawigacji */
 .cyber-navbar .btn {
   display: inline-flex !important;
   align-items: center !important;
@@ -167,7 +167,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
 }
 
 /* ==========================================================================
-   CARDS & SURFACES
+   KARTY I KAFELKI INFORMACYJNE
    ========================================================================== */
 .card,
 .cyber-body .card {
@@ -209,7 +209,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
   color: var(--cyber-text-dim) !important;
 }
 
-/* Stat Cards (Icons & Glows) */
+/* Okrągłe ikony statystyk na pulpicie głównym */
 .stat-icon-circle {
   width: 56px;
   height: 56px;
@@ -240,7 +240,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
-/* Birthday Today Alert Card */
+/* Wyróżniony kafelek: Urodziny wypadające dzisiaj */
 .cyber-body .border-danger {
   border-color: var(--omi-red-cyber) !important;
 }
@@ -255,7 +255,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
   text-shadow: 0 0 8px rgba(255, 42, 109, 0.4);
 }
 
-/* Badges - Cyber Age & Pill Badges */
+/* Odznaki i etykiety (wiek, dni do urodzin, statusy RSVP) */
 .badge-cyber-pill,
 .cyber-body .badge.bg-light {
   background-color: #0b131c !important;
@@ -300,7 +300,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
 }
 
 /* ==========================================================================
-   BUTTONS & CONTROLS
+   PRZYCISKI I KONTROLKI AKCJI
    ========================================================================== */
 .btn-primary {
   background: linear-gradient(135deg, var(--omi-cyan), #0284c7) !important;
@@ -365,7 +365,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
 }
 
 /* ==========================================================================
-   FORMS & INPUTS
+   FORMULARZE I POLA TEKSTOWE
    ========================================================================== */
 .form-control,
 .form-select {
@@ -394,7 +394,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
 }
 
 /* ==========================================================================
-   TABLES & LISTS
+   TABELE I LISTY ZNAJOMYCH
    ========================================================================== */
 .table {
   color: var(--cyber-text) !important;
@@ -415,21 +415,21 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
   vertical-align: middle;
 }
 
-/* Dane kontaktowe (telefon, email, notatki) w tabeli */
+/* Dane kontaktowe (telefon, email, notatki) w wierszu tabeli */
 .table td .small {
-  color: #cbd5e1 !important; /* Jasny, czytelny kolor tekstu */
+  color: #cbd5e1 !important;
   font-size: 0.85rem;
 }
 
 .table td .small i {
-  color: var(--omi-cyan) !important; /* Neonowy cyjan dla ikonek telefonu, maila i notatek */
+  color: var(--omi-cyan) !important;
 }
 
 .table-hover tbody tr:hover td {
   background-color: rgba(0, 240, 255, 0.05) !important;
 }
 
-/* List group */
+/* Grupa listowa (np. ostatnio dodani) */
 .list-group-item {
   background-color: var(--cyber-card) !important;
   border-color: var(--omi-border) !important;
@@ -441,7 +441,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
 }
 
 /* ==========================================================================
-   CALENDAR (Omi Cyber Grid)
+   SIATKA KALENDARZA URODZIN (WIDOK MIESIĄCA)
    ========================================================================== */
 .calendar-table th {
   background-color: var(--cyber-card-inner) !important;
@@ -532,7 +532,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
   text-shadow: 0 0 8px var(--omi-cyan-glow);
 }
 
-/* Nav Pills (Kalendarz tabs) */
+/* Zakładki miesięcy w kalendarzu (Pills) */
 .nav-pills .nav-link {
   color: var(--cyber-text-muted) !important;
   border: 1px solid var(--omi-border);
@@ -555,7 +555,7 @@ h1, h2, h3, h4, h5, h6, .cyber-brand-text {
 }
 
 /* ==========================================================================
-   FOOTER (Cyber HUD footer)
+   STOPKA STRONY (FOOTER)
    ========================================================================== */
 .cyber-footer {
   background: rgba(12, 19, 28, 0.95);

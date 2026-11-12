@@ -31,11 +31,12 @@ class Friend(models.Model):
 
     @property
     def next_birthday(self):
+        """Zwraca datę najbliższych urodzin (w tym lub przyszłym roku)"""
         today = date.today()
         try:
             bday_this_year = self.birth_date.replace(year=today.year)
         except ValueError:
-            # Obsługa 29 lutego w latach nieprzestępnych
+            # Obsługa 29 lutego w latach przestępnych
             bday_this_year = self.birth_date.replace(year=today.year, day=28)
 
         if bday_this_year < today:
@@ -47,10 +48,12 @@ class Friend(models.Model):
 
     @property
     def days_until_birthday(self):
+        """Liczba dni pozostałych do najbliższych urodzin"""
         return (self.next_birthday - date.today()).days
 
     @property
     def is_today(self):
+        """Czy dziś są urodziny tej osoby"""
         return self.days_until_birthday == 0
 
     @property
@@ -60,6 +63,7 @@ class Friend(models.Model):
 
     @property
     def current_age(self):
+        """Aktualny wiek osoby (ukończone lata)"""
         today = date.today()
         return today.year - self.birth_date.year - (
             (today.month, today.day) < (self.birth_date.month, self.birth_date.day)
@@ -67,16 +71,17 @@ class Friend(models.Model):
 
     @property
     def upcoming_age(self):
+        """Wiek, który osoba skończy przy najbliższych urodzinach"""
         return self.next_birthday.year - self.birth_date.year
 
 
 class Event(models.Model):
     EVENT_TYPE_CHOICES = [
-        ('birthday', '🎂 Impreza urodzinowa'),
-        ('surprise', '🎉 Przyjęcie niespodzianka'),
-        ('gift', '🎁 Zrzutka na prezent'),
-        ('outing', '🍕 Wypad / Wyjście do lokalu'),
-        ('other', '✨ Inne wydarzenie okolicznościowe'),
+        ('birthday', 'Impreza urodzinowa'),
+        ('surprise', 'Przyjęcie niespodzianka'),
+        ('gift', 'Zrzutka na prezent'),
+        ('outing', 'Wypad / Wyjście do lokalu'),
+        ('other', 'Inne wydarzenie okolicznościowe'),
     ]
 
     user = models.ForeignKey(
@@ -128,34 +133,39 @@ class Event(models.Model):
 
     @property
     def days_until(self):
+        """Liczba dni do rozpoczęcia wydarzenia (ujemna jeśli przeszłe)"""
         return (self.date - date.today()).days
 
     @property
     def is_today(self):
+        """Czy wydarzenie odbywa się dzisiaj"""
         return self.days_until == 0
 
     @property
     def is_past(self):
+        """Czy wydarzenie już się odbyło"""
         return self.days_until < 0
 
     @property
     def is_upcoming(self):
+        """Czy wydarzenie dopiero nastąpi (lub jest dzisiaj)"""
         return self.days_until >= 0
 
     @property
     def is_soon(self):
+        """Czy wydarzenie jest w ciągu najbliższych 7 dni"""
         return 0 <= self.days_until <= 7
 
 
 # ==============================================================================
-# ETAP 5: UCZESTNICY, KOMENTARZE I GŁOSOWANIE
+# MODELE ETAPU 5: UCZESTNICY, KOMENTARZE I GŁOSOWANIE
 # ==============================================================================
 
 class EventParticipant(models.Model):
     STATUS_CHOICES = [
-        ('going', '✅ Będę obecny(a)'),
-        ('maybe', '🤔 Być może'),
-        ('declined', '❌ Niestety nie mogę'),
+        ('going', 'Będę obecny(a)'),
+        ('maybe', 'Być może'),
+        ('declined', 'Niestety nie mogę'),
     ]
 
     event = models.ForeignKey(
@@ -238,6 +248,7 @@ class EventPoll(models.Model):
 
     @property
     def total_votes(self):
+        """Łączna liczba oddanych głosów w tej ankiecie"""
         return self.votes.count()
 
 
@@ -259,9 +270,11 @@ class PollOption(models.Model):
 
     @property
     def votes_count(self):
+        """Liczba głosów oddanych na tę konkretną opcję"""
         return self.votes.count()
 
     def percentage(self):
+        """Procent głosów tej opcji względem sumy wszystkich głosów w ankiecie"""
         total = self.poll.total_votes
         if total == 0:
             return 0
