@@ -6,8 +6,23 @@ from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import AuthenticationForm
 from django.db.models import Q
-from .models import Friend, Event
-from .forms import FriendForm, RegisterForm, UserProfileUpdateForm, EventForm
+from .models import (
+    Friend,
+    Event,
+    EventParticipant,
+    EventComment,
+    EventPoll,
+    PollOption,
+    PollVote,
+)
+from .forms import (
+    FriendForm,
+    RegisterForm,
+    UserProfileUpdateForm,
+    EventForm,
+    CommentForm,
+    PollCreateForm,
+)
 
 
 # ==============================================================================
@@ -298,9 +313,16 @@ def event_list(request):
     """Lista wszystkich zaplanowanych wydarzeń z wyszukiwarką i filtrami"""
     query = request.GET.get('q', '').strip()
     event_type = request.GET.get('type', '')
-    status_filter = request.GET.get('status', 'upcoming')  # domyślnie nadchodzące
+    status_filter = request.GET.get('status', 'upcoming')  # 'upcoming', 'past', 'all'
+    scope = request.GET.get('scope', 'all')  # 'all', 'mine', 'joined'
 
-    events = Event.objects.filter(user=request.user)
+    # Wydarzenia widoczne: własne LUB publiczne
+    events = Event.objects.filter(Q(user=request.user) | Q(is_public=True)).distinct()
+
+    if scope == 'mine':
+        events = events.filter(user=request.user)
+    elif scope == 'joined':
+        events = events.filter(participants__user=request.user, participants__status='going')
 
     if query:
         events = events.filter(
@@ -308,7 +330,8 @@ def event_list(request):
             Q(location__icontains=query) |
             Q(description__icontains=query) |
             Q(friend__first_name__icontains=query) |
-            Q(friend__last_name__icontains=query)
+            Q(friend__last_name__icontains=query) |
+            Q(user__username__icontains=query)
         )
 
     if event_type:
@@ -324,19 +347,23 @@ def event_list(request):
 
     events_list = list(events)
 
-    all_user_events = Event.objects.filter(user=request.user)
-    upcoming_count = all_user_events.filter(date__gte=today).count()
-    past_count = all_user_events.filter(date__lt=today).count()
+    # Statystyki kafelków
+    user_visible = Event.objects.filter(Q(user=request.user) | Q(is_public=True)).distinct()
+    upcoming_count = user_visible.filter(date__gte=today).count()
+    past_count = user_visible.filter(date__lt=today).count()
+    my_events_count = Event.objects.filter(user=request.user).count()
 
     context = {
         'events': events_list,
         'query': query,
         'event_type': event_type,
         'status_filter': status_filter,
+        'scope': scope,
         'event_types': Event.EVENT_TYPE_CHOICES,
         'total_count': len(events_list),
         'upcoming_count': upcoming_count,
         'past_count': past_count,
+        'my_events_count': my_events_count,
         'today': today,
     }
     return render(request, 'birthdays/event_list.html', context)
@@ -344,9 +371,55 @@ def event_list(request):
 
 @login_required
 def event_detail(request, pk):
-    """Szczegółowy widok pojedynczego wydarzenia"""
-    event = get_object_or_404(Event, pk=pk, user=request.user)
-    return render(request, 'birthdays/event_detail.html', {'event': event})
+    """Szczegółowy widok pojedynczego wydarzenia z uczestnikami, komentarzami i głosowaniem"""
+    event = get_object_or_404(
+        Event.objects.filter(Q(user=request.user) | Q(is_public=True)).distinct(),
+        pk=pk
+    )
+
+    # Uczestnicy
+    participants = event.participants.select_related('user').all()
+    going_list = [p for p in participants if p.status == 'going']
+    maybe_list = [p for p in participants if p.status == 'maybe']
+    declined_list = [p for p in participants if p.status == 'declined']
+
+    # Aktualna deklaracja zalogowanego użytkownika
+    user_rsvp = None
+    for p in participants:
+        if p.user == request.user:
+            user_rsvp = p.status
+            break
+
+    # Komentarze
+    comments = event.comments.select_related('author').order_by('created_at')
+    comment_form = CommentForm()
+
+    # Głosowania / Ankiety
+    polls = event.polls.prefetch_related('options__votes').all()
+    poll_form = PollCreateForm() if event.user == request.user else None
+
+    # Mapa oddanych głosów przez zalogowanego użytkownika: {poll.id: option_id}
+    user_votes = {}
+    for poll in polls:
+        vote = poll.votes.filter(user=request.user).first()
+        if vote:
+            user_votes[poll.id] = vote.option_id
+
+    context = {
+        'event': event,
+        'participants': participants,
+        'going_list': going_list,
+        'maybe_list': maybe_list,
+        'declined_list': declined_list,
+        'user_rsvp': user_rsvp,
+        'comments': comments,
+        'comment_form': comment_form,
+        'polls': polls,
+        'poll_form': poll_form,
+        'user_votes': user_votes,
+        'is_organizer': (event.user == request.user),
+    }
+    return render(request, 'birthdays/event_detail.html', context)
 
 
 @login_required
@@ -363,6 +436,8 @@ def event_create(request):
             event = form.save(commit=False)
             event.user = request.user
             event.save()
+            # Automatycznie dodaj organizatora jako obecnego
+            EventParticipant.objects.create(event=event, user=request.user, status='going')
             messages.success(request, f'Pomyślnie utworzono wydarzenie: {event.title}!')
             return redirect('birthdays:event_detail', pk=event.pk)
     else:
@@ -407,4 +482,118 @@ def event_delete(request, pk):
         return redirect('birthdays:event_list')
 
     return render(request, 'birthdays/event_confirm_delete.html', {'event': event})
+
+
+# ==============================================================================
+# AKCJE ETAPU 5: ZAPISY (RSVP), KOMENTARZE I GŁOSOWANIE
+# ==============================================================================
+
+@login_required
+def event_rsvp(request, pk):
+    """Zapis na wydarzenie / deklaracja obecności"""
+    event = get_object_or_404(
+        Event.objects.filter(Q(user=request.user) | Q(is_public=True)),
+        pk=pk
+    )
+    if request.method == 'POST':
+        status = request.POST.get('status')
+        if status in ['going', 'maybe', 'declined']:
+            participant, created = EventParticipant.objects.update_or_create(
+                event=event,
+                user=request.user,
+                defaults={'status': status}
+            )
+            labels = {
+                'going': 'Zadeklarowano obecność na wydarzeniu! 🥳',
+                'maybe': 'Zaznaczono status: Być może 🤔',
+                'declined': 'Zgłoszono brak możliwości uczestnictwa.'
+            }
+            messages.success(request, labels.get(status, 'Zaktualizowano status.'))
+        elif status == 'remove':
+            EventParticipant.objects.filter(event=event, user=request.user).delete()
+            messages.info(request, 'Wycofano Twoją deklarację uczestnictwa.')
+
+    return redirect('birthdays:event_detail', pk=event.pk)
+
+
+@login_required
+def event_comment_add(request, pk):
+    """Dodawanie komentarza do wydarzenia"""
+    event = get_object_or_404(
+        Event.objects.filter(Q(user=request.user) | Q(is_public=True)),
+        pk=pk
+    )
+    if request.method == 'POST':
+        form = CommentForm(request.POST)
+        if form.is_valid():
+            comment = form.save(commit=False)
+            comment.event = event
+            comment.author = request.user
+            comment.save()
+            messages.success(request, 'Twój komentarz został opublikowany!')
+        else:
+            messages.error(request, 'Wpisz treść komentarza przed wysłaniem.')
+
+    return redirect('birthdays:event_detail', pk=event.pk)
+
+
+@login_required
+def event_comment_delete(request, pk, comment_pk):
+    """Usuwanie komentarza (przez autora lub organizatora wydarzenia)"""
+    event = get_object_or_404(Event, pk=pk)
+    comment = get_object_or_404(EventComment, pk=comment_pk, event=event)
+
+    if comment.author == request.user or event.user == request.user:
+        comment.delete()
+        messages.info(request, 'Komentarz został usunięty.')
+    else:
+        messages.error(request, 'Nie masz uprawnień do usunięcia tego komentarza.')
+
+    return redirect('birthdays:event_detail', pk=event.pk)
+
+
+@login_required
+def event_poll_create(request, pk):
+    """Tworzenie ankiety / głosowania przez organizatora wydarzenia"""
+    event = get_object_or_404(Event, pk=pk, user=request.user)
+    if request.method == 'POST':
+        form = PollCreateForm(request.POST)
+        if form.is_valid():
+            poll = form.save(commit=False)
+            poll.event = event
+            poll.save()
+            options = form.cleaned_data['options_text']
+            for opt_text in options:
+                PollOption.objects.create(poll=poll, text=opt_text)
+            messages.success(request, f'Pomyślnie utworzono głosowanie: „{poll.question}”!')
+        else:
+            messages.error(request, 'Błąd w ankiecie. Podaj pytanie oraz co najmniej dwie opcje w nowej linii.')
+
+    return redirect('birthdays:event_detail', pk=event.pk)
+
+
+@login_required
+def event_poll_vote(request, pk, poll_pk):
+    """Oddanie głosu w głosowaniu / ankiecie wydarzenia"""
+    event = get_object_or_404(
+        Event.objects.filter(Q(user=request.user) | Q(is_public=True)),
+        pk=pk
+    )
+    poll = get_object_or_404(EventPoll, pk=poll_pk, event=event, is_active=True)
+
+    if request.method == 'POST':
+        option_id = request.POST.get('option_id')
+        if option_id:
+            option = get_object_or_404(PollOption, pk=option_id, poll=poll)
+            PollVote.objects.update_or_create(
+                poll=poll,
+                user=request.user,
+                defaults={'option': option}
+            )
+            messages.success(request, f'Twój głos na „{option.text}” został zapisany!')
+        else:
+            messages.warning(request, 'Wybierz jedną z opcji przed zatwierdzeniem głosu.')
+
+    return redirect('birthdays:event_detail', pk=event.pk)
+
 

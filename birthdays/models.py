@@ -111,6 +111,10 @@ class Event(models.Model):
         blank=True,
         verbose_name="Składka / Budżet (zł)"
     )
+    is_public = models.BooleanField(
+        default=True,
+        verbose_name="Wydarzenie otwarte dla znajomych (dostępne do zapisu)"
+    )
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data utworzenia")
     updated_at = models.DateTimeField(auto_now=True, verbose_name="Data modyfikacji")
 
@@ -141,4 +145,156 @@ class Event(models.Model):
     @property
     def is_soon(self):
         return 0 <= self.days_until <= 7
+
+
+# ==============================================================================
+# ETAP 5: UCZESTNICY, KOMENTARZE I GŁOSOWANIE
+# ==============================================================================
+
+class EventParticipant(models.Model):
+    STATUS_CHOICES = [
+        ('going', '✅ Będę obecny(a)'),
+        ('maybe', '🤔 Być może'),
+        ('declined', '❌ Niestety nie mogę'),
+    ]
+
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='participants',
+        verbose_name="Wydarzenie"
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='event_participations',
+        verbose_name="Użytkownik"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='going',
+        verbose_name="Deklaracja obecności"
+    )
+    joined_at = models.DateTimeField(auto_now_add=True, verbose_name="Data deklaracji")
+
+    class Meta:
+        unique_together = ('event', 'user')
+        verbose_name = "Uczestnik wydarzenia"
+        verbose_name_plural = "Uczestnicy wydarzeń"
+        ordering = ['joined_at']
+
+    def __str__(self):
+        return f"{self.user.username} - {self.get_status_display()} ({self.event.title})"
+
+
+class EventComment(models.Model):
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='comments',
+        verbose_name="Wydarzenie"
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='event_comments',
+        verbose_name="Autor"
+    )
+    content = models.TextField(verbose_name="Treść komentarza")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data dodania")
+    updated_at = models.DateTimeField(auto_now=True, verbose_name="Data edycji")
+
+    class Meta:
+        verbose_name = "Komentarz"
+        verbose_name_plural = "Komentarze"
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"Komentarz {self.author.username} do {self.event.title}"
+
+
+class EventPoll(models.Model):
+    event = models.ForeignKey(
+        Event,
+        on_delete=models.CASCADE,
+        related_name='polls',
+        verbose_name="Wydarzenie"
+    )
+    question = models.CharField(
+        max_length=250,
+        verbose_name="Pytanie / Przedmiot głosowania (np. prezent, lokal)"
+    )
+    is_active = models.BooleanField(default=True, verbose_name="Głosowanie aktywne")
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data utworzenia")
+
+    class Meta:
+        verbose_name = "Głosowanie / Ankieta"
+        verbose_name_plural = "Głosowania i Ankiety"
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Głosowanie: {self.question}"
+
+    @property
+    def total_votes(self):
+        return self.votes.count()
+
+
+class PollOption(models.Model):
+    poll = models.ForeignKey(
+        EventPoll,
+        on_delete=models.CASCADE,
+        related_name='options',
+        verbose_name="Głosowanie"
+    )
+    text = models.CharField(max_length=200, verbose_name="Opcja do wyboru")
+
+    class Meta:
+        verbose_name = "Opcja do wyboru"
+        verbose_name_plural = "Opcje do wyboru"
+
+    def __str__(self):
+        return self.text
+
+    @property
+    def votes_count(self):
+        return self.votes.count()
+
+    def percentage(self):
+        total = self.poll.total_votes
+        if total == 0:
+            return 0
+        return round((self.votes_count / total) * 100)
+
+
+class PollVote(models.Model):
+    poll = models.ForeignKey(
+        EventPoll,
+        on_delete=models.CASCADE,
+        related_name='votes',
+        verbose_name="Głosowanie"
+    )
+    option = models.ForeignKey(
+        PollOption,
+        on_delete=models.CASCADE,
+        related_name='votes',
+        verbose_name="Wybrana opcja"
+    )
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='poll_votes',
+        verbose_name="Głosujący"
+    )
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name="Data oddania głosu")
+
+    class Meta:
+        unique_together = ('poll', 'user')
+        verbose_name = "Oddany głos"
+        verbose_name_plural = "Oddane głosy"
+
+    def __str__(self):
+        return f"{self.user.username} -> {self.option.text}"
+
 

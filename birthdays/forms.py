@@ -1,13 +1,13 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
-from .models import Friend, Event
+from .models import Friend, Event, EventComment, EventPoll, PollOption
 
 
 class EventForm(forms.ModelForm):
     class Meta:
         model = Event
-        fields = ['title', 'friend', 'event_type', 'date', 'time', 'location', 'description', 'budget']
+        fields = ['title', 'friend', 'event_type', 'date', 'time', 'location', 'description', 'budget', 'is_public']
         widgets = {
             'title': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -41,6 +41,9 @@ class EventForm(forms.ModelForm):
                 'placeholder': 'np. 50.00',
                 'step': '0.01'
             }),
+            'is_public': forms.CheckboxInput(attrs={
+                'class': 'form-check-input'
+            }),
         }
         labels = {
             'title': 'Tytuł wydarzenia',
@@ -51,6 +54,7 @@ class EventForm(forms.ModelForm):
             'location': 'Lokalizacja / Adres',
             'description': 'Opis i szczegóły imprezy',
             'budget': 'Przewidywany budżet / Składka (zł)',
+            'is_public': 'Wydarzenie otwarte (widoczne dla wszystkich i umożliwiające zapisy)',
         }
 
     def __init__(self, *args, user=None, **kwargs):
@@ -58,6 +62,55 @@ class EventForm(forms.ModelForm):
         if user:
             self.fields['friend'].queryset = Friend.objects.filter(user=user)
         self.fields['friend'].empty_label = "-- Brak solenizanta (wydarzenie ogólne) --"
+
+
+class CommentForm(forms.ModelForm):
+    class Meta:
+        model = EventComment
+        fields = ['content']
+        widgets = {
+            'content': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Napisz komentarz, propozycję lub wiadomość do uczestników...'
+            })
+        }
+        labels = {
+            'content': 'Twój komentarz',
+        }
+
+
+class PollCreateForm(forms.ModelForm):
+    options_text = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 4,
+            'placeholder': 'Wpisz opcje do wyboru, każdą w nowej linii:\nnp.\nKarta podarunkowa do sklepu\nZestaw klocków LEGO\nWspólny wypad na gokarty\nGra planszowa'
+        }),
+        label="Opcje do wyboru",
+        help_text="Wpisz każdą opcję w nowej linii (minimum 2 opcje)."
+    )
+
+    class Meta:
+        model = EventPoll
+        fields = ['question']
+        widgets = {
+            'question': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'np. Co kupujemy solenizantowi na prezent?'
+            })
+        }
+        labels = {
+            'question': 'Pytanie w ankiecie',
+        }
+
+    def clean_options_text(self):
+        text = self.cleaned_data.get('options_text', '').strip()
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
+        if len(lines) < 2:
+            raise forms.ValidationError("Podaj co najmniej dwie różne opcje do wyboru.")
+        return lines
+
 
 
 class FriendForm(forms.ModelForm):

@@ -116,7 +116,7 @@
           </div>
 
           <!-- Opis -->
-          <div class="mb-4">
+          <div class="mb-3">
             <label for="{{ form.description.id_for_label }}" class="form-label fw-semibold">
               {{ form.description.label }}
             </label>
@@ -124,6 +124,19 @@
             {% if form.description.errors %}
               <div class="text-danger small mt-1">{{ form.description.errors.0 }}</div>
             {% endif %}
+          </div>
+
+          <!-- Widoczność i zapisy (is_public) -->
+          <div class="mb-4 p-3 rounded-3" style="background: rgba(0, 240, 255, 0.04); border: 1px solid rgba(0, 240, 255, 0.15);">
+            <div class="form-check form-switch d-flex align-items-center gap-2">
+              {{ form.is_public }}
+              <label class="form-check-label fw-semibold text-white cursor-pointer" for="{{ form.is_public.id_for_label }}">
+                {{ form.is_public.label }}
+              </label>
+            </div>
+            <div class="form-text text-muted small mt-1 ps-4">
+              Włączenie pozwala innym zalogowanym użytkownikom zobaczyć to wydarzenie, zadeklarować obecność (RSVP), brać udział w ankietach i komentować.
+            </div>
           </div>
 
           <!-- Przyciski -->

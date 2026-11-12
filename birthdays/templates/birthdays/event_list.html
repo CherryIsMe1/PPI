@@ -169,24 +169,29 @@
         <div class="flex-grow-1"></div>
         {% endif %}
 
-        <!-- Dolna belka: budżet i akcje -->
+        <!-- Dolna belka: budżet, uczestnicy i akcje -->
         <div class="pt-3 mt-3 border-top border-secondary border-opacity-25 d-flex justify-content-between align-items-center">
-          <div>
+          <div class="small">
             {% if event.budget %}
-              <span class="small text-muted">Budżet:</span>
+              <span class="text-muted">Budżet:</span>
               <strong class="omi-cyan-text">{{ event.budget }} zł</strong>
             {% endif %}
+            <span class="text-muted ms-2" title="Liczba zadeklarowanych uczestników">
+              <i class="bi bi-people omi-purple-text"></i> {{ event.participants.count }}
+            </span>
           </div>
           <div class="btn-group btn-group-sm">
-            <a href="{% url 'birthdays:event_detail' event.pk %}" class="btn btn-outline-primary" title="Szczegóły">
+            <a href="{% url 'birthdays:event_detail' event.pk %}" class="btn btn-outline-primary" title="Szczegóły, zapisy i głosowanie">
               <i class="bi bi-eye"></i>
             </a>
+            {% if event.user == request.user %}
             <a href="{% url 'birthdays:event_update' event.pk %}" class="btn btn-outline-secondary" title="Edytuj">
               <i class="bi bi-pencil"></i>
             </a>
             <a href="{% url 'birthdays:event_delete' event.pk %}" class="btn btn-outline-danger" title="Usuń">
               <i class="bi bi-trash"></i>
             </a>
+            {% endif %}
           </div>
         </div>
       </div>

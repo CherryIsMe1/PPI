@@ -4,12 +4,13 @@
 
 {% block content %}
 <div class="row justify-content-center">
-  <div class="col-lg-9 col-xl-8">
+  <div class="col-lg-10 col-xl-9">
     <!-- Górny pasek nawigacyjny -->
     <div class="d-flex justify-content-between align-items-center mb-4">
       <a href="{% url 'birthdays:event_list' %}" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-arrow-left me-1"></i> Wróć do listy wydarzeń
       </a>
+      {% if is_organizer %}
       <div class="btn-group btn-group-sm">
         <a href="{% url 'birthdays:event_update' event.pk %}" class="btn btn-outline-primary px-3">
           <i class="bi bi-pencil me-1"></i> Edytuj
@@ -18,6 +19,7 @@
           <i class="bi bi-trash me-1"></i> Usuń
         </a>
       </div>
+      {% endif %}
     </div>
 
     <!-- Główna karta wydarzenia -->
@@ -42,7 +44,13 @@
         </div>
 
         <h1 class="h2 fw-bold text-white mb-2">{{ event.title }}</h1>
-        <p class="text-muted small mb-0">Organizator: <strong class="omi-cyan-text">{{ event.user.username }}</strong> &bull; Utworzono: {{ event.created_at|date:"d.m.Y H:i" }}</p>
+        <p class="text-muted small mb-0">
+          Organizator: <strong class="omi-cyan-text">{{ event.user.username }}</strong> &bull; 
+          Utworzono: {{ event.created_at|date:"d.m.Y H:i" }}
+          {% if event.is_public %}
+            &bull; <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-2">Wydarzenie otwarte</span>
+          {% endif %}
+        </p>
       </div>
 
       <div class="card-body p-4">
@@ -93,38 +101,270 @@
                 <div class="small text-muted">Urodziny: {{ event.friend.birth_date|date:"d F" }} (za {{ event.friend.days_until_birthday }} dni)</div>
               </div>
             </div>
+            {% if is_organizer %}
             <a href="{% url 'birthdays:friend_update' event.friend.pk %}" class="btn btn-outline-secondary btn-sm">
               <i class="bi bi-person me-1"></i> Zobacz znajomego
             </a>
+            {% endif %}
           </div>
         </div>
         {% endif %}
 
         <!-- Opis i szczegóły wydarzenia -->
+        {% if event.description %}
         <div class="mb-4">
-          <h2 class="h5 fw-bold text-white mb-3">
+          <h2 class="h6 fw-bold text-white mb-2">
             <i class="bi bi-card-text omi-cyan-text me-2"></i>Opis i plan imprezy
           </h2>
-          {% if event.description %}
-            <div class="p-4 rounded-3 text-light" style="background: var(--cyber-card-inner); border: 1px solid var(--omi-border); white-space: pre-line; line-height: 1.7;">
-              {{ event.description }}
+          <div class="p-3 rounded-3 text-light" style="background: var(--cyber-card-inner); border: 1px solid var(--omi-border); white-space: pre-line; line-height: 1.6;">
+            {{ event.description }}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- ================================================================ -->
+        <!-- ETAP 5: ZAPISY NA WYDARZENIE (RSVP) & LISTA UCZESTNIKÓW -->
+        <!-- ================================================================ -->
+        <div class="card border-0 shadow-sm mb-4" style="background: var(--cyber-card-inner); border: 1px solid var(--omi-border);">
+          <div class="card-body p-4">
+            <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
+              <div>
+                <h2 class="h5 fw-bold text-white mb-1">
+                  <i class="bi bi-people-fill omi-cyan-text me-2"></i>Zapisy i Uczestnicy
+                </h2>
+                <p class="text-muted small mb-0">Zadeklaruj swój udział i zobacz listę potwierdzonych osób.</p>
+              </div>
+
+              <!-- Formularz deklaracji obecności (RSVP) -->
+              <form method="post" action="{% url 'birthdays:event_rsvp' event.pk %}" class="d-flex flex-wrap gap-2">
+                {% csrf_token %}
+                <button type="submit" name="status" value="going" class="btn btn-sm {% if user_rsvp == 'going' %}btn-success text-white fw-bold{% else %}btn-outline-secondary text-light{% endif %}">
+                  <i class="bi bi-check2-circle me-1"></i> Będę obecny(a)
+                </button>
+                <button type="submit" name="status" value="maybe" class="btn btn-sm {% if user_rsvp == 'maybe' %}btn-warning text-dark fw-bold{% else %}btn-outline-secondary text-light{% endif %}">
+                  <i class="bi bi-question-circle me-1"></i> Być może
+                </button>
+                <button type="submit" name="status" value="declined" class="btn btn-sm {% if user_rsvp == 'declined' %}btn-danger text-white fw-bold{% else %}btn-outline-secondary text-light{% endif %}">
+                  <i class="bi bi-x-circle me-1"></i> Nie mogę
+                </button>
+                {% if user_rsvp %}
+                <button type="submit" name="status" value="remove" class="btn btn-sm btn-outline-danger" title="Wycofaj deklarację">
+                  <i class="bi bi-trash"></i>
+                </button>
+                {% endif %}
+              </form>
             </div>
-          {% else %}
-            <p class="text-muted fst-italic">Brak opisu dla tego wydarzenia. Kliknij „Edytuj”, aby dodać wskazówki, plan lub co należy ze sobą zabrać.</p>
-          {% endif %}
+
+            <!-- Podsumowanie obecności -->
+            <div class="row g-2 mb-3 text-center">
+              <div class="col-4">
+                <div class="p-2 rounded bg-success bg-opacity-10 border border-success border-opacity-25">
+                  <span class="small text-muted d-block">Potwierdzeni:</span>
+                  <strong class="text-success fs-5">{{ going_list|length }}</strong>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-2 rounded bg-warning bg-opacity-10 border border-warning border-opacity-25">
+                  <span class="small text-muted d-block">Być może:</span>
+                  <strong class="text-warning fs-5">{{ maybe_list|length }}</strong>
+                </div>
+              </div>
+              <div class="col-4">
+                <div class="p-2 rounded bg-danger bg-opacity-10 border border-danger border-opacity-25">
+                  <span class="small text-muted d-block">Nieobecni:</span>
+                  <strong class="text-danger fs-5">{{ declined_list|length }}</strong>
+                </div>
+              </div>
+            </div>
+
+            <!-- Lista nazwisk uczestników -->
+            {% if participants %}
+            <div class="d-flex flex-wrap gap-2 pt-2 border-top border-secondary border-opacity-25">
+              {% for p in participants %}
+                <div class="d-inline-flex align-items-center gap-2 px-3 py-1 rounded-pill small border"
+                     style="background: rgba(12, 19, 28, 0.7);
+                            {% if p.status == 'going' %}border-color: rgba(34, 197, 94, 0.4) !important;
+                            {% elif p.status == 'maybe' %}border-color: rgba(247, 151, 30, 0.4) !important;
+                            {% else %}border-color: rgba(239, 68, 68, 0.4) !important;{% endif %}">
+                  <i class="bi bi-person-fill {% if p.status == 'going' %}text-success{% elif p.status == 'maybe' %}text-warning{% else %}text-danger{% endif %}"></i>
+                  <span class="text-white">{{ p.user.first_name|default:p.user.username }}</span>
+                  <span class="badge {% if p.status == 'going' %}bg-success{% elif p.status == 'maybe' %}bg-warning text-dark{% else %}bg-danger{% endif %}" style="font-size: 0.65rem;">
+                    {{ p.get_status_display|slice:":1" }}
+                  </span>
+                </div>
+              {% endfor %}
+            </div>
+            {% else %}
+              <p class="text-muted small mb-0 fst-italic">Brak deklaracji. Bądź pierwszą osobą, która zapisze się na wydarzenie!</p>
+            {% endif %}
+          </div>
         </div>
 
-        <!-- Zapowiedź kolejnego etapu (10.12 - Uczestnicy i Głosowanie) -->
-        <div class="p-3 rounded-3" style="background: rgba(0, 240, 255, 0.04); border: 1px dashed rgba(0, 240, 255, 0.3);">
-          <div class="d-flex align-items-center gap-2 mb-1">
-            <i class="bi bi-people-fill omi-cyan-text"></i>
-            <strong class="text-white small">Uczestnicy, Komentarze i Głosowanie:</strong>
-            <span class="badge bg-primary bg-opacity-25 text-info ms-auto small">Etap 5 &bull; 10.12.2026</span>
+        <!-- ================================================================ -->
+        <!-- ETAP 5: GŁOSOWANIE / ANKIETY (PREZENTY I ATRAKCJE) -->
+        <!-- ================================================================ -->
+        <div class="card border-0 shadow-sm mb-4" style="background: var(--cyber-card-inner); border: 1px solid var(--omi-border);">
+          <div class="card-body p-4">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div>
+                <h2 class="h5 fw-bold text-white mb-1">
+                  <i class="bi bi-bar-chart-line-fill omi-purple-text me-2"></i>Głosowanie i Ankiety
+                </h2>
+                <p class="text-muted small mb-0">Zagłosuj na pomysł na prezent lub wybór atrakcji.</p>
+              </div>
+
+              {% if is_organizer %}
+              <button class="btn btn-outline-secondary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#createPollCollapse">
+                <i class="bi bi-plus-circle me-1"></i> Nowa ankieta
+              </button>
+              {% endif %}
+            </div>
+
+            <!-- Formularz dodawania ankiety (tylko dla organizatora) -->
+            {% if is_organizer %}
+            <div class="collapse mb-4" id="createPollCollapse">
+              <div class="p-3 rounded-3" style="background: rgba(168, 85, 247, 0.08); border: 1px solid rgba(168, 85, 247, 0.25);">
+                <h3 class="h6 fw-bold text-white mb-2">Utwórz nową ankietę do głosowania</h3>
+                <form method="post" action="{% url 'birthdays:event_poll_create' event.pk %}">
+                  {% csrf_token %}
+                  <div class="mb-2">
+                    <label class="form-label small text-muted">Pytanie w ankiecie:</label>
+                    {{ poll_form.question }}
+                  </div>
+                  <div class="mb-2">
+                    <label class="form-label small text-muted">Opcje do wyboru (każda w nowej linii):</label>
+                    {{ poll_form.options_text }}
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-sm fw-bold px-3">
+                    <i class="bi bi-check-circle me-1"></i> Opublikuj ankietę
+                  </button>
+                </form>
+              </div>
+            </div>
+            {% endif %}
+
+            <!-- Lista aktywnych ankiet -->
+            {% if polls %}
+              {% for poll in polls %}
+              <div class="p-3 rounded-3 mb-3" style="background: rgba(12, 19, 28, 0.7); border: 1px solid var(--omi-border);">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <h3 class="h6 fw-bold text-white mb-0">
+                    <i class="bi bi-patch-question omi-purple-text me-1"></i> {{ poll.question }}
+                  </h3>
+                  <span class="badge badge-cyber-pill small">Głosów: {{ poll.total_votes }}</span>
+                </div>
+
+                <!-- Formularz oddania głosu -->
+                <form method="post" action="{% url 'birthdays:event_poll_vote' event.pk poll.pk %}">
+                  {% csrf_token %}
+                  <div class="d-flex flex-column gap-2 mb-3">
+                    {% for opt in poll.options.all %}
+                    <label class="p-2 rounded-2 d-flex flex-column gap-1 cursor-pointer"
+                           style="background: rgba(255, 255, 255, 0.02); border: 1px solid {% if user_votes|default:'' and user_votes|slice:':1' %}{% if user_votes|stringformat:'s' %}var(--omi-border){% endif %}{% else %}var(--omi-border){% endif %};">
+                      <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center gap-2">
+                          <input type="radio" name="option_id" value="{{ opt.pk }}" class="form-check-input"
+                                 {% if user_votes|default:'' %}{% for pid, oid in user_votes.items %}{% if pid == poll.pk and oid == opt.pk %}checked{% endif %}{% endfor %}{% endif %}>
+                          <span class="text-white fw-semibold small">{{ opt.text }}</span>
+                          {% for pid, oid in user_votes.items %}
+                            {% if pid == poll.pk and oid == opt.pk %}
+                              <span class="badge bg-primary bg-opacity-25 text-info" style="font-size: 0.65rem;">Twój głos</span>
+                            {% endif %}
+                          {% endfor %}
+                        </div>
+                        <span class="small text-muted">{{ opt.votes_count }} gł. ({{ opt.percentage }}%)</span>
+                      </div>
+                      
+                      <!-- Pasek postępu wyników -->
+                      <div class="progress" style="height: 6px; background-color: rgba(255, 255, 255, 0.08);">
+                        <div class="progress-bar" role="progressbar"
+                             style="width: {{ opt.percentage }}%; background: linear-gradient(90deg, var(--omi-purple), var(--omi-cyan));"
+                             aria-valuenow="{{ opt.percentage }}" aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                      </div>
+                    </label>
+                    {% endfor %}
+                  </div>
+                  <button type="submit" class="btn btn-outline-primary btn-sm px-3 fw-bold">
+                    <i class="bi bi-hand-thumbs-up me-1"></i> Zapisz swój głos
+                  </button>
+                </form>
+              </div>
+              {% endfor %}
+            {% else %}
+              <p class="text-muted small mb-0 fst-italic">
+                Brak aktywnych ankiet dla tego wydarzenia. 
+                {% if is_organizer %}Kliknij przycisk „Nowa ankieta”, aby zapytać uczestników o pomysły na prezent!{% endif %}
+              </p>
+            {% endif %}
           </div>
-          <p class="text-muted small mb-0">
-            W kolejnym etapie w tym miejscu pojawi się lista potwierdzonych gości, możliwość dodawania komentarzy oraz ankieta głosowania nad prezentem.
-          </p>
         </div>
+
+        <!-- ================================================================ -->
+        <!-- ETAP 5: KOMENTARZE I DYSKUSJA -->
+        <!-- ================================================================ -->
+        <div class="card border-0 shadow-sm" style="background: var(--cyber-card-inner); border: 1px solid var(--omi-border);">
+          <div class="card-body p-4">
+            <h2 class="h5 fw-bold text-white mb-1">
+              <i class="bi bi-chat-left-dots-fill omi-cyan-text me-2"></i>Komentarze i Ustalenia ({{ comments|length }})
+            </h2>
+            <p class="text-muted small mb-4">Wymieniajcie się pomysłami, ustaleniami i pytaniami dotyczącymi imprezy.</p>
+
+            <!-- Formularz dodawania komentarza -->
+            <form method="post" action="{% url 'birthdays:event_comment_add' event.pk %}" class="mb-4">
+              {% csrf_token %}
+              <div class="mb-2">
+                {{ comment_form.content }}
+              </div>
+              <div class="d-flex justify-content-end">
+                <button type="submit" class="btn btn-primary btn-sm px-4 fw-bold">
+                  <i class="bi bi-send-fill me-1"></i> Dodaj komentarz
+                </button>
+              </div>
+            </form>
+
+            <!-- Lista komentarzy -->
+            {% if comments %}
+            <div class="d-flex flex-column gap-3">
+              {% for comment in comments %}
+              <div class="p-3 rounded-3" style="background: rgba(12, 19, 28, 0.7); border: 1px solid var(--omi-border);">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="stat-icon-circle bg-primary bg-opacity-10 text-primary" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; font-size: 0.9rem;">
+                      <i class="bi bi-person-fill"></i>
+                    </div>
+                    <div>
+                      <strong class="text-white small">{{ comment.author.username }}</strong>
+                      {% if comment.author == event.user %}
+                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;">Organizator</span>
+                      {% endif %}
+                      <span class="text-muted small ms-2">{{ comment.created_at|date:"d.m.Y H:i" }}</span>
+                    </div>
+                  </div>
+
+                  {% if comment.author == request.user or is_organizer %}
+                  <form method="post" action="{% url 'birthdays:event_comment_delete' event.pk comment.pk %}" onsubmit="return confirm('Czy na pewno chcesz usunąć ten komentarz?');">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-link text-danger p-0 border-0" title="Usuń komentarz">
+                      <i class="bi bi-trash"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+                <div class="text-light small ps-4" style="line-height: 1.6; white-space: pre-line;">
+                  {{ comment.content }}
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+              <p class="text-muted small mb-0 text-center py-3 fst-italic">
+                Brak komentarzy. Rozpocznij dyskusję wpisując pierwszą wiadomość powyżej!
+              </p>
+            {% endif %}
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
